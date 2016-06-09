@@ -33,9 +33,9 @@ require('krypton-orm');
 // *************************************************************************
 //                        Error monitoring for neon
 // *************************************************************************
-// if (CONFIG[CONFIG.environment].enableLithium) {
-//   require(__dirname, '/vendor/lithium');
-// }
+if (CONFIG[CONFIG.environment].enableLithium) {
+  require('./vendor/lithium');
+}
 
 global.Neonode = require('./vendor/neonode');
 global.NotFoundError = require('./support/error');
