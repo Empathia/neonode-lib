@@ -37,7 +37,7 @@ if (CONFIG[CONFIG.environment].enableLithium) {
   require('./vendor/lithium');
 }
 
-global.Neonode = require('./vendor/neonode');
+global.Neonode = global.neonode = require('./vendor/neonode');
 global.NotFoundError = require('./support/error');
 
 // Load LithiumEngine

@@ -65,6 +65,7 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _serverStart : function(){
+      this.loadControllers();
       this.server.listen(CONFIG[CONFIG.environment].port);
       logger.info('Server started listening on http://localhost:' + CONFIG[CONFIG.environment].port);
     },
@@ -82,10 +83,10 @@ var Neonode = Class({}, 'Neonode')({
       });
 
       logger.info('Loading BaseController.js');
-      require('./controllers/BaseController.js');
+      require('../controllers/BaseController.js');
 
       logger.info('Loading RestfulController.js');
-      require('./controllers/RestfulController.js');
+      require('../controllers/RestfulController.js');
 
       glob.sync("controllers/**/*.js").forEach(function(file) {
         logger.info('Loading ' + file + '...');
