@@ -1,0 +1,19 @@
+{
+  "name": "neonode-lib",
+  "version": "0.0.0",
+  "description": "Common libraries and support extracted from Neonode",
+  "dependencies": {
+    "express": "^4.13.4",
+    "glob": "^7.0.3",
+    "knex": "^0.11.5",
+    "krypton-orm": "0.0.15",
+    "mkdirp": "^0.5.1",
+    "morgan": "^1.7.0",
+    "mysql": "^2.11.1",
+    "neon": "^2.0.0",
+    "pg": "^5.0.0",
+    "thulium": "^2.0.0",
+    "thulium-express": "^1.1.2",
+    "winston": "^2.2.0"
+  }
+}
