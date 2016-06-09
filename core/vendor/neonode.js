@@ -65,9 +65,8 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _serverStart : function(){
-      this.server.listen(CONFIG[CONFIG.environment].port, function() {
-        logger.info('Server started listening on http://localhost:' + CONFIG[CONFIG.environment].port);
-      });
+      this.server.listen(CONFIG[CONFIG.environment].port);
+      logger.info('Server started listening on http://localhost:' + CONFIG[CONFIG.environment].port);
     },
 
     loadControllers : function(){

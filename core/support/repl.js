@@ -10,7 +10,7 @@ if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
 
-// Neonode._serverStart();
+Neonode._serverStart();
 
 REPL.start({
   stdout: process.stdout,
