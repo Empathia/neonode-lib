@@ -46,6 +46,20 @@ var Neonode = Class({}, 'Neonode')({
 
       this.app.enable('trust proxy');
 
+      // dynamic routes
+      var self = this;
+
+      this.app.use(function(req, res, next) {
+        var handler;
+
+        if (!self._findHandler || !(handler = self._findHandler(req.path))) {
+          // TODO: log this?
+          return next();
+        }
+
+        return handler[0].run(req, res, next);
+      });
+
       // *************************************************************************
       //                            Static routes
       // *************************************************************************
@@ -59,8 +73,27 @@ var Neonode = Class({}, 'Neonode')({
       return this;
     },
 
-    _drawRoutes : function(routes, dispatch) {
-      var router = this.express.Router();
+    _setupRouteMappings : function(routes, dispatch) {
+      logger.info(section('== RouteMappings'));
+
+      var self = this;
+
+      function run(controller, action, route) {
+        return function() {
+          var callback = dispatch
+            ? dispatch(self.controllers[controller], action)
+            : self.controllers[controller]()[action];
+
+          if (!callback) {
+            // TODO: error 404?
+            return next();
+          }
+
+          return callback.apply(null, arguments);
+        };
+      }
+
+      var matchers = [];
 
       routes.forEach(function(route) {
         // append given Foo#bar
@@ -75,13 +108,13 @@ var Neonode = Class({}, 'Neonode')({
         logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
         logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
 
-        var args = dispatch ? dispatch(controller, action) : [this.controllers[controller][action]];
-
-        // TODO: catch-all or reverse-routing
-        router.route(route.path)[route.verb](args);
+        matchers.push({
+          route: route,
+          run: run(controller, action, route)
+        });
       }, this);
 
-      return router;
+      this._findHandler = this.router.map(matchers);
     },
 
     _loadFiles : function(pattern, label, cb) {
@@ -108,7 +141,8 @@ var Neonode = Class({}, 'Neonode')({
           ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
-          ._setupMiddlewares();
+          ._setupMiddlewares()
+          ._setupRouteMappings(this.router.routes);
 
       this.server.listen(config('port'));
       logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
