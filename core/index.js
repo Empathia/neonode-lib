@@ -51,7 +51,7 @@ try {
     });
   }
 } catch (e) {
-  (logger || console).error('Error loading `config/config.js` file');
+  (logger || console).error('Error loading `' + configFile + '` file');
   (logger || console).error(e.stack);
   exit(1);
 }
