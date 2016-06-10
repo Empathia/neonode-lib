@@ -15,7 +15,7 @@ var logger = new winston.Logger({
 
     }),
     new winston.transports.File({
-      filename: CONFIG.logFile,
+      filename: config('logFile'),
       handleExceptions: false,
       colorize: false,
       maxsize : 5242880,

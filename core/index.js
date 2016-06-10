@@ -1,57 +1,51 @@
 // all files are derived from here
 var cwd = process.cwd();
 
-var fs = require('fs');
-var path = require('path');
-var mkdirp = require('mkdirp');
+var util = require('../')(cwd);
+
+var exit = process.exit.bind(process);
 
 // main process
 process.name = 'Neonode';
 
 // configuration file
-var configFile = path.join(cwd, 'config/config.js');
+var configFile = 'config/config.js';
 
-if (!fs.existsSync(configFile)) {
-  throw new Error('Neonode: missing `config/config.js` file');
+if (!util.isFile(configFile)) {
+  console.error('Missing `' + configFile + '` file');
+  exit(1);
 }
 
-global.CONFIG = require(configFile);
+// private
+var SETTINGS = {};
 
-// directory for logs
-if (!fs.existsSync(path.join(cwd, 'log'))) {
-  mkdirp.sync(path.join(cwd, 'log'), 0744);
+function config(key) {
+  return (SETTINGS[SETTINGS.environment] || {})[key] || (SETTINGS[key]) || null;
 }
 
-global.logger = require('./support/logger');
+try {
+  SETTINGS = require(util.filepath(configFile));
 
-require('neon');
-require('neon/stdlib');
-require('thulium'); // Ultra fast templating engine. See https://github.com/escusado/thulium
-
-require('krypton-orm');
-
-// *************************************************************************
-//                        Error monitoring for neon
-// *************************************************************************
-if (CONFIG[CONFIG.environment].enableLithium) {
-  require('./vendor/lithium');
+  // CONFIG is too verbose
+  Object.defineProperty(global, 'CONFIG', {
+    get: function() {
+      console.warn('CONFIG is deprectaed, use `config()` instead');
+      return SETTINGS;
+    }
+  });
+} catch (e) {
+  console.error('Error loading `config/config.js` file');
+  console.error(e.stack);
+  exit(1);
 }
 
-global.Neonode = global.neonode = require('./vendor/neonode');
-global.NotFoundError = require('./support/error');
+var logDir = util.dirname(config('logFile'));
 
-// Load LithiumEngine
-// if (CONFIG[CONFIG.environment].enableLithium) {
-//   require(path.join(process.cwd(), 'lib', 'LithiumEngine.js'));
-// }
+if (!util.isDir(logDir)) {
+  util.mkdirp(logDir, 0744);
+}
 
-// Load RouteMapper
-CONFIG.router = require(path.join(cwd, 'config', 'RouteMappings.js'));
-CONFIG.router.helpers = CONFIG.router.mappings;
+// exports global stuff
+global.config = config;
 
-// Comment the following 2 lines to disable database access
-var knex = require('knex')(CONFIG.database[CONFIG.environment]);
-Krypton.Model.knex(knex); // Bind a knex instance to all Krypton Models
-
-// make globally
-module.exports = Neonode;
+var logger = require('./support/logger');

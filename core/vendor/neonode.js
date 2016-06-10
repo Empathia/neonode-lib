@@ -107,6 +107,11 @@ var Neonode = Class({}, 'Neonode')({
         neonode.controllers[controllerName] = controller;
       });
 
+      // initializers
+      glob.sync('config/initializers/*.js').forEach(function(file) {
+        require(path.join(cwd, file));
+      });
+
       // *************************************************************************
       //                      External Middlewares
       // *************************************************************************

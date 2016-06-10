@@ -2,6 +2,7 @@
   "name": "neonode-lib",
   "version": "0.0.0",
   "description": "Common libraries and support extracted from Neonode",
+  "main": "index.js",
   "dependencies": {
     "express": "^4.13.4",
     "glob": "^7.0.3",
