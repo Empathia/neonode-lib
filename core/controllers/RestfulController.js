@@ -1,4 +1,5 @@
-var RestfulController = Class('RestfulController').inherits('BaseController')({
+/* global Class, BaseController */
+var RestfulController = Class('RestfulController').inherits(BaseController)({
   prototype : {
     name : null,
 
@@ -8,28 +9,28 @@ var RestfulController = Class('RestfulController').inherits('BaseController')({
       return this;
     },
 
-    index : function(req, res, next) {
-      res.send(501, "index Not Implemented");
+    index : function(req, res) {
+      res.send(501, 'index Not Implemented');
     },
 
-    show : function(req, res, next) {
-      res.send(501, "show Not Implemented");
+    show : function(req, res) {
+      res.send(501, 'show Not Implemented');
     },
 
-    new : function(req, res, next) {
-      res.send(501, "new Not Implemented");
+    new : function(req, res) {
+      res.send(501, 'new Not Implemented');
     },
 
-    create : function(req, res, next) {
-      res.send(501, "create Not Implemented");
+    create : function(req, res) {
+      res.send(501, 'create Not Implemented');
     },
 
-    update : function(req, res, next) {
-      res.send(501, "update Not Implemented");
+    update : function(req, res) {
+      res.send(501, 'update Not Implemented');
     },
 
-    destroy : function(req, res, next) {
-      res.send(501, "destroy Not Implemented");
+    destroy : function(req, res) {
+      res.send(501, 'destroy Not Implemented');
     }
   }
 });

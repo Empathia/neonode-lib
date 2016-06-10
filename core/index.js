@@ -22,6 +22,8 @@ if (!util.isFile(configFile)) {
 // private
 var SETTINGS = {};
 
+/* global logger, Krypton */
+
 function config(key, value) {
   var parts = key.split('.');
   var prop = parts.shift();

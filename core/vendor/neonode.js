@@ -1,13 +1,12 @@
-var glob     = require('glob');
 var express  = require('express');
 var http     = require('http');
 var morgan   = require('morgan');
-var path     = require('path');
 var clc      = require('cli-color');
 
 var dim = clc.blackBright,
     yellow = clc.yellow;
 
+/* global config, logger, Class */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -44,7 +43,7 @@ var Neonode = Class({}, 'Neonode')({
 
       this.app.set('views', 'views');
 
-      this.app.enable("trust proxy");
+      this.app.enable('trust proxy');
 
       // *************************************************************************
       //                            Static routes

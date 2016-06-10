@@ -25,6 +25,7 @@ function heat(level) {
   return dim(level);
 }
 
+/* global logger, Li */
 Li.Engine.before.push(function beforeEngine(data) {
   logger.info(dim('  -> ' + (data.spy.targetObject.className || data.spy.targetObject.constructor.className || '')  + '.' + data.spy.methodName));
 });

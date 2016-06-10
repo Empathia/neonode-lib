@@ -5,6 +5,8 @@
  * global scope.
  *
  */
+
+/* global window, performance, Li, Class */
 var globalScope = function globalScope() {
     try {
         return window;
@@ -53,7 +55,7 @@ Class(Li, 'ObjectSpy')({
             Object.getOwnPropertyNames(targetObject).forEach(function (property) {
                 var spy;
                 try {
-                    if (typeof targetObject[property] !== "function"){
+                    if (typeof targetObject[property] !== 'function'){
                         return false;
                     }
                 }

@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "Common libraries and support extracted from Neonode",
   "main": "index.js",
+  "scripts": {
+    "lint": "eslint core"
+  },
   "dependencies": {
     "cli-color": "^1.1.0",
     "express": "^4.13.4",
@@ -17,5 +20,8 @@
     "thulium": "^2.0.0",
     "thulium-express": "^1.1.2",
     "winston": "^2.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^2.11.1"
   }
 }

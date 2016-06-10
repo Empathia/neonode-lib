@@ -6,6 +6,7 @@ var Module = require('module');
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
 
+/* global Neonode */
 if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
