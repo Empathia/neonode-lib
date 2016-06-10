@@ -1,5 +1,3 @@
-var util = require('../../');
-
 var glob     = require('glob');
 var express  = require('express');
 var http     = require('http');
@@ -18,9 +16,10 @@ var Neonode = Class({}, 'Neonode')({
     controllers : {},
     models : {},
 
-    init : function (){
+    init : function (cwd){
       logger.info("Initializing Application");
 
+      this.util = require('../../')(cwd);
       this.express = express;
       this.http = http;
 
@@ -36,8 +35,6 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _configureApp : function(){
-      var neonode = this;
-
       // *************************************************************************
       //                  Setup Thulium engine for Express
       // *************************************************************************
@@ -61,65 +58,91 @@ var Neonode = Class({}, 'Neonode')({
       return this;
     },
 
+    _loadFiles : function(pattern, label, cb) {
+      var files = this.util.glob(pattern);
+
+      if (files.length) {
+        logger.info(label);
+        files.forEach(cb || function(file) {
+          logger.info('  ' + this.util.relative(file));
+          require(file);
+        }, this);
+      }
+
+      return this;
+    },
+
     _serverStop : function(){
       this.server.close();
+      return this;
     },
 
     _serverStart : function(){
-      this._loadControllers();
+      this._configureApp()
+          ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
+          ._loadFiles('models/**/*.js', 'Loading models...')
+          ._loadControllers()
+          ._setupMiddlewares();
+
       this.server.listen(config('port'));
       logger.info('Server started listening on http://localhost:' + config('port'));
+      return this;
     },
 
     _loadControllers : function(){
-      var neonode = this;
+      var fixedControllers = [];
 
-      this._configureApp();
-      // models
-      // controllers
-      // initializers
-      // middlewares
+      require('../controllers/BaseController');
+      require('../controllers/RestfulController');
 
-      logger.info('Initializing...');
+      this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
+        var fixedFile = this.util.relative(file);
 
-      logger.info('Loading Models...');
-      logger.info('Loading Controllers...');
-      logger.info('Registering Middlewares...');
+        var fileNameArray = fixedFile.split('/');
 
-      // glob.sync("controllers/**/*.js").forEach(function(file) {
-      //   logger.info('Loading ' + file + '...');
+        logger.info('  ' + fixedFile);
 
-      //   var fileNameArray = file.split('/');
+        var controller = require(file);
+        var controllerName = controller.name;
 
-      //   var controller = require(path.join(cwd, '/' + file));
+        if (fileNameArray.length > 2) {
+          fileNameArray.shift(1); // remove the first item of the array (controllers)
+          fileNameArray.pop(1); // remove the last item of the array (filename)
 
-      //   var controllerName = controller.name;
+          controllerName = fileNameArray.join('.') + '.' + controller.name;
+        }
 
-      //   if (fileNameArray.length > 2) {
-      //     fileNameArray.shift(1); // remove the first item of the array (controllers)
-      //     fileNameArray.pop(1); // remove the last item of the array (filename)
+        fixedControllers[controllerName] = controller;
+      });
 
-      //     controllerName = fileNameArray.join('.') + '.' + controller.name;
-      //   }
+      this.controllers = fixedControllers;
 
-      //   neonode.controllers[controllerName] = controller;
-      // });
+      return this;
+    },
 
-      // // *************************************************************************
-      // //                      External Middlewares
-      // // *************************************************************************
-      // CONFIG.middlewares.forEach(function(middleware) {
-      //   logger.info('Loading ' + middleware.name + ' middleware: ' + middleware.path + '...');
+    _setupMiddlewares : function(){
+      var middlewares = config('middlewares') || [];
 
-      //   var middlewareFile = require(path.join(cwd, '/' + middleware.path));
+      if (middlewares.length) {
+        logger.info('Registering middlewares...');
 
-      //   neonode.app.use(middlewareFile);
-      // });
+        middlewares.forEach(function(middleware) {
+          logger.info('  ' + middleware.path + ' -> ' + middleware.name);
+
+          var middlewareModule = require(this.util.filepath(middleware.path));
+
+          if (typeof middlewareModule === 'function') {
+            this.app.use(middlewareModule);
+          }
+        }, this);
+      }
 
       return this;
     }
   }
 });
 
-//Startup
-module.exports = new Neonode();
+//Startup (factory)
+module.exports = function(cwd) {
+  return new Neonode(cwd);
+};

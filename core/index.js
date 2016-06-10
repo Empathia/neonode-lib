@@ -22,23 +22,37 @@ if (!util.isFile(configFile)) {
 // private
 var SETTINGS = {};
 
-function config(key) {
-  return (SETTINGS[SETTINGS.environment] || {})[key] || (SETTINGS[key]) || null;
+function config(key, value) {
+  var parts = key.split('.');
+  var prop = parts.shift();
+  var obj = (SETTINGS[SETTINGS.environment] || {})[prop] || (SETTINGS[prop]) || null;
+
+  try {
+    while (parts.length) {
+      obj = obj[parts.shift()];
+    }
+  } catch (e) {
+    (logger || console).warn('Cannot read `' + key  + '` from ' + configFile);
+  }
+
+  return typeof obj !== 'undefined' ? obj : value;
 }
 
 try {
   SETTINGS = require(util.filepath(configFile));
 
   // CONFIG is too verbose
-  Object.defineProperty(global, 'CONFIG', {
-    get: function() {
-      console.warn('CONFIG is deprectaed, use `config()` instead');
-      return SETTINGS;
-    }
-  });
+  if (!global.hasOwnProperty('CONFIG')) {
+    Object.defineProperty(global, 'CONFIG', {
+      get: function() {
+        (logger || console).warn('CONFIG is deprecated, use `config()` instead');
+        return SETTINGS;
+      }
+    });
+  }
 } catch (e) {
-  console.error('Error loading `config/config.js` file');
-  console.error(e.stack);
+  (logger || console).error('Error loading `config/config.js` file');
+  (logger || console).error(e.stack);
   exit(1);
 }
 
@@ -81,7 +95,7 @@ if (hasREPL || config('enableLithium')) {
 }
 
 // standard interfaces
-var Neonode = global.Neonode = module.exports = require('./vendor/neonode');
+var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
 // Load RouteMapper
 Neonode.router = require(util.filepath('config/RouteMappings.js'));

@@ -54,7 +54,6 @@ REPL.start({
 
     setTimeout(function() {
       Neonode._serverStop();
-      process.stdout.write('\n');
 
       // intentionally re-required
       Neonode = require('../../core');

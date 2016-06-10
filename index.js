@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var glob = require('glob');
 var mkdirp = require('mkdirp');
 
 function wrap(fn, args) {
@@ -20,7 +21,8 @@ function tryCall(fn, next) {
 }
 
 module.exports = function(cwd) {
-  var filepath = wrap(path.resolve, [cwd]);
+  var filepath = wrap(path.resolve, [cwd]),
+      relative = wrap(path.relative, [cwd]);
 
   var _isFile = tryCall(fs.statSync, 'isFile'),
       _isDir = tryCall(fs.statSync, 'isDirectory');
@@ -37,11 +39,23 @@ module.exports = function(cwd) {
     return mkdirp.sync(filepath(filename), permissions);
   }
 
+  function _glob(pattern, cb) {
+    var files = glob.sync(filepath(pattern));
+
+    if (!cb) {
+      return files;
+    }
+
+    cb(files);
+  }
+
   return {
     dirname: path.dirname,
     filepath: filepath,
+    relative: relative,
     isFile: isFile,
     isDir: isDir,
-    mkdirp: _mkdirp,
+    glob: _glob,
+    mkdirp: _mkdirp
   };
 };

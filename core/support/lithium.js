@@ -4,7 +4,7 @@ Li.Engine.before.push(function beforeEngine(data) {
 
 Li.Engine.error.push(function errorEngine(data) {
   logger.error('Lithium Detected an error...');
-  logger.error('ERROR:', data.error.toString());
+  logger.error(data.error.stack);
 });
 
 Li.Engine.after.push(function afterEngine(data) {
