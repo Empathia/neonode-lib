@@ -11,6 +11,13 @@ if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
 
+console.log([
+  '',
+  '# type `.server [on|off|start|stop]` to manage Express',
+  '# type `.reload [pattern]` to restart the current application',
+  ''
+].join('\n'));
+
 var enableServer = process.argv.indexOf('--server') > -1;
 
 if (enableServer) {

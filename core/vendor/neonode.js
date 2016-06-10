@@ -31,12 +31,6 @@ var Neonode = Class({}, 'Neonode')({
 
       this.server = this.http.createServer(this.app);
 
-      if (process.env.NODE_REPL) {
-        logger.info(dim('REPL: type .server [on|off|start|stop] to manage Express'));
-      } else {
-        logger.info(dim('Execute `Neonode._serverStart()` to start the server'));
-      }
-
       return this;
     },
 
