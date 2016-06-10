@@ -128,14 +128,35 @@ var Neonode = Class({}, 'Neonode')({
 
         logger.info('  ' + fixedFile);
 
-        var controller = require(file);
-        var controllerName = controller.name;
+        var ClassOrController = require(file);
+        var controllerName;
+        var controller;
+
+        // TODO: lazily load this modules?
+        if (ClassOrController.className && typeof ClassOrController.constructor === 'function') {
+          controllerName = ClassOrController.className.replace('Controller', '');
+          controller = function() {
+            if (!controller.__instance) {
+              controller.__instance = new ClassOrController();
+            }
+            return controller.__instance;
+          };
+        } else {
+          if (!ClassOrController.name) {
+            throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
+          }
+
+          controllerName = ClassOrController.name;
+          controller = function() {
+            return ClassOrController;
+          };
+        }
 
         if (fileNameArray.length > 2) {
           fileNameArray.shift(1); // remove the first item of the array (controllers)
           fileNameArray.pop(1); // remove the last item of the array (filename)
 
-          controllerName = fileNameArray.join('.') + '.' + controller.name;
+          controllerName = fileNameArray.join('.') + '.' + controllerName;
         }
 
         fixedControllers[controllerName] = controller;
