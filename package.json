@@ -22,6 +22,6 @@
     "winston": "^2.2.0"
   },
   "devDependencies": {
-    "eslint": "^2.11.1"
+    "eslint": "^2.12.0"
   }
 }

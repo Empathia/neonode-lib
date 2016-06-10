@@ -4,7 +4,8 @@ var morgan   = require('morgan');
 var clc      = require('cli-color');
 
 var dim = clc.blackBright,
-    yellow = clc.yellow;
+    section = clc.bold,
+    highlight = clc.yellow;
 
 /* global config, logger, Class */
 var Neonode = Class({}, 'Neonode')({
@@ -20,7 +21,7 @@ var Neonode = Class({}, 'Neonode')({
     models : {},
 
     init : function (cwd){
-      logger.info('Initializing application...');
+      logger.info(section('Initializing application...'));
 
       this.util = require('../../')(cwd);
       this.express = express;
@@ -30,6 +31,12 @@ var Neonode = Class({}, 'Neonode')({
 
       this.server = this.http.createServer(this.app);
 
+      if (process.env.NODE_REPL) {
+        logger.info(dim('REPL: type .server [on|off|start|stop] to manage Express'));
+      } else {
+        logger.info(dim('Execute `Neonode._serverStart()` to start the server'));
+      }
+
       return this;
     },
 
@@ -37,7 +44,7 @@ var Neonode = Class({}, 'Neonode')({
       // *************************************************************************
       //                  Setup Thulium engine for Express
       // *************************************************************************
-      logger.info('Setting Thulium Engine for Express...');
+      logger.info(section('Setting Thulium Engine for Express...'));
       this.app.engine('html', require('thulium-express'));
       this.app.set('view engine', 'html');
 
@@ -71,7 +78,7 @@ var Neonode = Class({}, 'Neonode')({
         var controller = _handler[0];
         var action     = _handler[1] || route.action;
 
-        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + yellow(route.path));
+        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
         logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
 
         var args = dispatch ? dispatch(controller, action) : [this.controllers[controller][action]];
@@ -87,7 +94,7 @@ var Neonode = Class({}, 'Neonode')({
       var files = this.util.glob(pattern);
 
       if (files.length) {
-        logger.info(label);
+        logger.info(section(label));
         files.forEach(cb || function(file) {
           logger.info('  ' + this.util.relative(file));
           require(file);
@@ -110,7 +117,7 @@ var Neonode = Class({}, 'Neonode')({
           ._setupMiddlewares();
 
       this.server.listen(config('port'));
-      logger.info('Server started listening on http://localhost:' + config('port'));
+      logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
       return this;
     },
 
@@ -149,7 +156,7 @@ var Neonode = Class({}, 'Neonode')({
       var middlewares = config('middlewares') || [];
 
       if (middlewares.length) {
-        logger.info('Registering middlewares...');
+        logger.info(section('Registering middlewares...'));
 
         middlewares.forEach(function(middleware) {
           logger.info('  ' + middleware.path + ' -> ' + middleware.name);

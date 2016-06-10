@@ -11,9 +11,26 @@ if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
 
-Neonode._serverStart();
+var enableServer = process.argv.indexOf('--server') > -1;
 
-REPL.start({
+if (enableServer) {
+  Neonode._serverStart();
+}
+
+function reload() {
+  if (enableServer) {
+    Neonode._serverStop();
+  }
+
+  // intentionally re-required
+  Neonode = require('../../core');
+
+  if (enableServer) {
+    Neonode._serverStart();
+  }
+}
+
+var repl = REPL.start({
   stdout: process.stdout,
   stdin: process.stdin,
   prompt: '',
@@ -32,8 +49,29 @@ REPL.start({
 .on('exit', function() {
   console.log('bye bye!');
   exit();
-})
-.defineCommand('reload', {
+});
+
+var _lastStatus;
+
+repl.defineCommand('server', {
+  help: 'Starts a new Express server session',
+  action: function(value) {
+    if (['', 'on', 'start'].indexOf(value) > -1) {
+      enableServer = true;
+    }
+
+    if (['off', 'stop'].indexOf(value) > -1) {
+      enableServer = false;
+    }
+
+    if (_lastStatus !== enableServer) {
+      _lastStatus = enableServer;
+      setTimeout(reload);
+    }
+  }
+});
+
+repl.defineCommand('reload', {
   help: 'Reload modules from the current Neonode instance',
   action: function(name) {
     var files = 0;
@@ -54,15 +92,7 @@ REPL.start({
       }
     });
 
-    setTimeout(function() {
-      Neonode._serverStop();
-
-      // intentionally re-required
-      Neonode = require('../../core');
-      Neonode._serverStart();
-
-      // process.stdout.write(REPL.repl._initialPrompt);
-    });
+    setTimeout(reload);
 
     process.stdout.write(files + ' file'
       + (files !== 1 ? 's were' : ' was') + ' reloaded\n');
