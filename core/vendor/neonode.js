@@ -17,7 +17,7 @@ var Neonode = Class({}, 'Neonode')({
     models : {},
 
     init : function (cwd){
-      logger.info("Initializing Application");
+      logger.info('Initializing application...');
 
       this.util = require('../../')(cwd);
       this.express = express;
@@ -27,10 +27,6 @@ var Neonode = Class({}, 'Neonode')({
 
       this.server = this.http.createServer(this.app);
 
-      logger.info("Application Initialized");
-
-      logger.info("Execute application._serverStart() to start the server");
-
       return this;
     },
 
@@ -38,9 +34,10 @@ var Neonode = Class({}, 'Neonode')({
       // *************************************************************************
       //                  Setup Thulium engine for Express
       // *************************************************************************
-      logger.info("Setting Thulium Engine for Express");
+      logger.info('Setting Thulium Engine for Express...');
       this.app.engine('html', require('thulium-express'));
       this.app.set('view engine', 'html');
+
       this.app.set('views', 'views');
 
       this.app.enable("trust proxy");
