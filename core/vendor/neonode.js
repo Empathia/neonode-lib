@@ -3,6 +3,10 @@ var express  = require('express');
 var http     = require('http');
 var morgan   = require('morgan');
 var path     = require('path');
+var clc      = require('cli-color');
+
+var dim = clc.blackBright,
+    yellow = clc.yellow;
 
 var Neonode = Class({}, 'Neonode')({
   prototype : {
@@ -53,6 +57,31 @@ var Neonode = Class({}, 'Neonode')({
       this.app.use(morgan('combined', {stream: logger.stream}));
 
       return this;
+    },
+
+    _drawRoutes : function(routes, dispatch) {
+      var router = this.express.Router();
+
+      routes.forEach(function(route) {
+        // append given Foo#bar
+        if (route.to) {
+          route.handler.push(route.to);
+        }
+
+        var _handler   = route.handler.join('.').split('#');
+        var controller = _handler[0];
+        var action     = _handler[1] || route.action;
+
+        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + yellow(route.path));
+        logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
+
+        var args = dispatch ? dispatch(controller, action) : [this.controllers[controller][action]];
+
+        // TODO: catch-all or reverse-routing
+        router.route(route.path)[route.verb](args);
+      }, this);
+
+      return router;
     },
 
     _loadFiles : function(pattern, label, cb) {
