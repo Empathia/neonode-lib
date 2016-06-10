@@ -100,6 +100,3 @@ var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd)
 // Load RouteMapper
 Neonode.router = require(util.filepath('config/RouteMappings.js'));
 Neonode.router.helpers = Neonode.router.mappings;
-
-// basic 404 error
-global.NotFoundError = require('./support/error');
