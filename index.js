@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var glob = require('glob');
 var mkdirp = require('mkdirp');
+var clc = require('cli-color');
 
 function wrap(fn, args) {
   return function() {
@@ -56,6 +57,7 @@ module.exports = function(cwd) {
     isFile: isFile,
     isDir: isDir,
     glob: _glob,
-    mkdirp: _mkdirp
+    mkdirp: _mkdirp,
+    color: clc
   };
 };
