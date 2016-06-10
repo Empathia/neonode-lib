@@ -5,6 +5,9 @@ var util = require('../')(cwd);
 
 var exit = process.exit.bind(process);
 
+// TODO: this value should be used to increase log level?
+var hasREPL = typeof window !== 'undefined' || process.argv.indexOf(util.filepath('bin/repl.js')) > -1;
+
 // main process
 process.name = 'Neonode';
 
@@ -72,7 +75,7 @@ require('thulium');
 // *************************************************************************
 //                        Error monitoring for neon
 // *************************************************************************
-if (config('enableLithium')) {
+if (hasREPL || config('enableLithium')) {
   require('./vendor/lithium');
   require('./support/lithium');
 }
@@ -80,8 +83,9 @@ if (config('enableLithium')) {
 // standard interfaces
 var Neonode = global.Neonode = module.exports = require('./vendor/neonode');
 
-global.NotFoundError = require('./support/error');
-
 // Load RouteMapper
 Neonode.router = require(util.filepath('config/RouteMappings.js'));
 Neonode.router.helpers = Neonode.router.mappings;
+
+// basic 404 error
+global.NotFoundError = require('./support/error');
