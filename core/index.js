@@ -48,4 +48,40 @@ if (!util.isDir(logDir)) {
 // exports global stuff
 global.config = config;
 
-var logger = require('./support/logger');
+// logger interface
+global.logger = require('./support/logger');
+
+// neon core
+require('neon');
+require('neon/stdlib');
+
+// database first
+require('krypton-orm');
+
+// support disable database access
+var db = config('database');
+
+if (!(!db || db.disabled)) {
+  // Bind a knex instance to all Krypton Models
+  Krypton.Model.knex(require('knex')(db));
+}
+
+// Ultra fast templating engine. See https://github.com/escusado/thulium
+require('thulium');
+
+// *************************************************************************
+//                        Error monitoring for neon
+// *************************************************************************
+if (config('enableLithium')) {
+  require('./vendor/lithium');
+  require('./support/lithium');
+}
+
+// standard interfaces
+var Neonode = global.Neonode = module.exports = require('./vendor/neonode');
+
+global.NotFoundError = require('./support/error');
+
+// Load RouteMapper
+Neonode.router = require(util.filepath('config/RouteMappings.js'));
+Neonode.router.helpers = Neonode.router.mappings;
