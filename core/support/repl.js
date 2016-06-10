@@ -15,6 +15,7 @@ Neonode._serverStart();
 REPL.start({
   stdout: process.stdout,
   stdin: process.stdin,
+  prompt: '',
   eval: function (cmd, context, filename, callback) {
     if (cmd === _empty) {
       return callback();
@@ -59,7 +60,7 @@ REPL.start({
       Neonode = require('../../core');
       Neonode._serverStart();
 
-      process.stdout.write(REPL.repl._initialPrompt);
+      // process.stdout.write(REPL.repl._initialPrompt);
     });
 
     process.stdout.write(files + ' file'
