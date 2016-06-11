@@ -100,5 +100,7 @@ if (hasREPL || config('enableLithium')) {
 var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
 // Load RouteMapper
-Neonode.router = require(util.filepath('config/RouteMappings.js'));
-Neonode.router.helpers = Neonode.router.mappings;
+var routeMappings = require('route-mappings');
+
+Neonode.router = require(util.filepath('config/routeMappings.js'))(routeMappings());
+// Neonode.router.helpers = Neonode.router.mappings;
