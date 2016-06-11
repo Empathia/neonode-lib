@@ -52,6 +52,7 @@ module.exports = function(cwd) {
 
   return {
     dirname: path.dirname,
+    basename: path.basename,
     filepath: filepath,
     relative: relative,
     isFile: isFile,

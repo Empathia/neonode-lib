@@ -7,6 +7,8 @@ var dim = clc.blackBright,
     section = clc.bold,
     highlight = clc.yellow;
 
+var routeMappings = require('route-mappings');
+
 /* global config, logger, Class */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
@@ -28,10 +30,13 @@ var Neonode = Class({}, 'Neonode')({
       this.http = http;
 
       this.app = this.express();
-
       this.server = this.http.createServer(this.app);
 
       return this;
+    },
+
+    _drawRoutes: function(routes) {
+      this.router = routes(routeMappings());
     },
 
     _configureApp : function(){
@@ -46,20 +51,6 @@ var Neonode = Class({}, 'Neonode')({
 
       this.app.enable('trust proxy');
 
-      // dynamic routes
-      var self = this;
-
-      this.app.use(function(req, res, next) {
-        var handler;
-
-        if (!self._findHandler || !(handler = self._findHandler(req.path))) {
-          // TODO: log this?
-          return next();
-        }
-
-        return handler[0].run(req, res, next);
-      });
-
       // *************************************************************************
       //                            Static routes
       // *************************************************************************
@@ -73,25 +64,8 @@ var Neonode = Class({}, 'Neonode')({
       return this;
     },
 
-    _setupRouteMappings : function(routes, dispatch) {
+    _bindRouteMappings : function(routes) {
       logger.info(section('== RouteMappings'));
-
-      var self = this;
-
-      function run(controller, action, route) {
-        return function() {
-          var callback = dispatch
-            ? dispatch(self.controllers[controller], action)
-            : self.controllers[controller]()[action];
-
-          if (!callback) {
-            // TODO: error 404?
-            return next();
-          }
-
-          return callback.apply(null, arguments);
-        };
-      }
 
       var matchers = [];
 
@@ -109,12 +83,13 @@ var Neonode = Class({}, 'Neonode')({
         logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
 
         matchers.push({
-          route: route,
-          run: run(controller, action, route)
+          controller: controller,
+          action: action,
+          route: route
         });
       }, this);
 
-      this._findHandler = this.router.map(matchers);
+      return this.router.map(matchers);
     },
 
     _loadFiles : function(pattern, label, cb) {
@@ -141,8 +116,7 @@ var Neonode = Class({}, 'Neonode')({
           ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
-          ._setupMiddlewares()
-          ._setupRouteMappings(this.router.routes);
+          ._setupMiddlewares();
 
       this.server.listen(config('port'));
       logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
@@ -202,21 +176,57 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _setupMiddlewares : function(){
-      var middlewares = config('middlewares') || [];
+      logger.info(section('Loading middlewares...'));
 
-      if (middlewares.length) {
-        logger.info(section('Registering middlewares...'));
+      var fixedMiddlewares = require('../middlewares');
 
-        middlewares.forEach(function(middleware) {
-          logger.info('  ' + middleware.path + ' -> ' + middleware.name);
+      this.util.glob('middlewares/**/*.js').forEach(function (file) {
+        // override middlewares
+        fixedMiddlewares[this.util.basename(file, '.js')] = file;
 
-          var middlewareModule = require(this.util.filepath(middleware.path));
+        logger.info('  ' + this.util.relative(file));
+      }, this);
 
-          if (typeof middlewareModule === 'function') {
-            this.app.use(middlewareModule);
-          }
-        }, this);
+      var middlewares = config('middlewares') || {};
+
+      // IoC for route-mappings and controllers
+      var findHandler = this._bindRouteMappings(this.router.routes);
+
+      var seen = {},
+          self = this,
+          app = this.app;
+
+      function bindRoute(params) {
+        // TODO: all decoration happen here?
+
+        var factoryController = self.controllers[params.controller];
+        var controller = factoryController();
+
+        return controller[params.action];
       }
+
+      app.use(function (req, res, next) {
+        if (seen[req.path]) {
+          return next();
+        }
+
+        // short-circuit
+        seen[req.path] = 1;
+
+        var matches = findHandler(req.path);
+
+        if (!matches.length) {
+          return next();
+        }
+
+        var cb = matches[0];
+
+        if (self.controllers[cb.controller]) {
+          app[cb.route.verb](cb.route.path, bindRoute(cb));
+        }
+
+        next();
+      });
 
       return this;
     }
