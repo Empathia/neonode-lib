@@ -14,7 +14,7 @@ module.exports = (function() {
     },
     function (err, req, res, next) {
       logger.error('CSRF', err.toString(), res.locals);
-      next();
+      next(err);
     }
   ];
 })();
