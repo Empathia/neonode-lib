@@ -1,5 +1,6 @@
 /* global Class, BaseController */
 var RestfulController = Class('RestfulController').inherits(BaseController)({
+  use : ['api'],
   prototype : {
     name : null,
 

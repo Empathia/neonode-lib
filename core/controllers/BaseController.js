@@ -1,6 +1,6 @@
 /* global Class, CustomEventSupport */
 var BaseController = Class('BaseController').includes(CustomEventSupport)({
-  beforeActions : [],
+  use : ['web'],
   prototype : {
     init : function (){
       this.name = this.constructor.className.replace('Controller', '');

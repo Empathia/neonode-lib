@@ -9,7 +9,7 @@ var dim = clc.blackBright,
 
 var routeMappings = require('route-mappings');
 
-/* global config, logger, Class */
+/* global config, logger, Class, NotFoundError */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -196,36 +196,104 @@ var Neonode = Class({}, 'Neonode')({
           self = this,
           app = this.app;
 
-      function bindRoute(params) {
-        // TODO: all decoration happen here?
+      // flatten and require middleware lists
+      function requireMiddlewares(map) {
+        var list = [];
 
+        map.forEach(function (name) {
+          if (middlewares[name]) {
+            Array.prototype.push.apply(list, requireMiddlewares(middlewares[name]))
+          } else if (list.indexOf(name) === -1) {
+            if (!fixedMiddlewares[name]) {
+              throw new Error('Neonode: unknown `' + name + '` middleware');
+            }
+
+            list.push(require(fixedMiddlewares[name]));
+          }
+        });
+
+        return list;
+      }
+
+      function bindRoute(params) {
         var factoryController = self.controllers[params.controller];
         var controller = factoryController();
 
-        return controller[params.action];
+        // prepend custom middlewares per route
+        return requireMiddlewares(controller.constructor.use || [])
+          .concat(controller[params.action]);
       }
 
-      app.use(function (req, res, next) {
+      // app-level middlewares and route-dispatcher
+      app.use(requireMiddlewares(middlewares.http || []).concat(function (req, res, next) {
         if (seen[req.path]) {
           return next();
         }
 
-        // short-circuit
-        seen[req.path] = 1;
+        logger.info(dim('Resolving `' + req.path + '` path...'));
 
         var matches = findHandler(req.path);
 
         if (!matches.length) {
-          return next();
+          return next(new NotFoundError('Neonode: cannot resolve `' + req.path + '` path'));
         }
 
         var cb = matches[0];
 
         if (self.controllers[cb.controller]) {
-          app[cb.route.verb](cb.route.path, bindRoute(cb));
+          var name = cb.controller + '.' + cb.action;
+
+          logger.info(highlight(name) + dim(' was found, binding...'));
+
+          try {
+            app[cb.route.verb](cb.route.path, bindRoute(cb));
+          } catch (e) {
+            logger.error(highlight(name) + dim(' cannot be bound...'));
+            return next(e);
+          }
+
+          logger.info(highlight(name) + dim(' now responds to ') + highlight(cb.route.path));
         }
 
+        // short-circuit
+        seen[req.path] = 1;
+
         next();
+      }));
+
+      // built-in error handling
+      app.use(function(err, req, res, next) {
+        logger.error(err.stack || err.toString());
+
+        switch (err.name) {
+          case 'NotFoundError':
+            res.status(404).render('shared/404.html', {
+              message: err.message,
+              layout: false
+            });
+          break;
+
+          case 'ForbiddenError':
+            res.status(403).render('shared/500.html', {
+              layout: false,
+              error: err.stack
+            });
+          break;
+
+          default:
+            res.status(500).format({
+              html: function () {
+                res.render('shared/500.html', {
+                  layout: false,
+                  error: 'Error:\n\n' + JSON.stringify(err) + '\n\nStack:\n\n' + err.stack
+                });
+              },
+              json: function () {
+                res.json(err);
+              }
+            });
+          break;
+        }
       });
 
       return this;
