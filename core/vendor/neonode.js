@@ -19,6 +19,7 @@ var Neonode = Class({}, 'Neonode')({
     router            : null,
     env               : config('environment'),
 
+    disableLithium: true,
     controllers : {},
     models : {},
 
@@ -64,12 +65,12 @@ var Neonode = Class({}, 'Neonode')({
       return this;
     },
 
-    _bindRouteMappings : function(routes) {
-      logger.info(section('== RouteMappings'));
+    _bindRouteMappings : function() {
+      logger.info(section('Registering routes...'));
 
       var matchers = [];
 
-      routes.forEach(function(route) {
+      this.router.routes.forEach(function(route) {
         // append given Foo#bar
         if (route.to) {
           route.handler.push(route.to);
@@ -79,8 +80,8 @@ var Neonode = Class({}, 'Neonode')({
         var controller = _handler[0];
         var action     = _handler[1] || route.action;
 
-        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
-        logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
+        // logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
+        // logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
 
         matchers.push({
           controller: controller,
@@ -89,180 +90,39 @@ var Neonode = Class({}, 'Neonode')({
         });
       }, this);
 
-      return this.router.map(matchers);
-    },
-
-    _loadFiles : function(pattern, label, cb) {
-      var files = this.util.glob(pattern);
-
-      if (files.length) {
-        logger.info(section(label));
-        files.forEach(cb || function(file) {
-          logger.info('  ' + this.util.relative(file));
-          require(file);
-        }, this);
-      }
-
-      return this;
-    },
-
-    _serverStop : function(){
-      this.server.close();
-      return this;
-    },
-
-    _serverStart : function(){
-      this._configureApp()
-          ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
-          ._loadFiles('models/**/*.js', 'Loading models...')
-          ._loadControllers()
-          ._setupMiddlewares();
-
-      this.server.listen(config('port'));
-      logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
-      return this;
-    },
-
-    _loadControllers : function(){
-      var fixedControllers = [];
-
-      require('../controllers/BaseController');
-      require('../controllers/RestfulController');
-
-      this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
-        var fixedFile = this.util.relative(file);
-
-        var fileNameArray = fixedFile.split('/');
-
-        logger.info('  ' + fixedFile);
-
-        var ClassOrController = require(file);
-        var controllerName;
-        var controller;
-
-        // TODO: lazily load this modules?
-        if (ClassOrController.className && typeof ClassOrController.constructor === 'function') {
-          controllerName = ClassOrController.className.replace('Controller', '');
-          controller = function() {
-            if (!controller.__instance) {
-              controller.__instance = new ClassOrController();
-            }
-            return controller.__instance;
-          };
-        } else {
-          if (!ClassOrController.name) {
-            throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
-          }
-
-          controllerName = ClassOrController.name;
-          controller = function() {
-            return ClassOrController;
-          };
-        }
-
-        if (fileNameArray.length > 2) {
-          fileNameArray.shift(1); // remove the first item of the array (controllers)
-          fileNameArray.pop(1); // remove the last item of the array (filename)
-
-          controllerName = fileNameArray.join('.') + '.' + controllerName;
-        }
-
-        fixedControllers[controllerName] = controller;
-      });
-
-      this.controllers = fixedControllers;
-
-      return this;
-    },
-
-    _setupMiddlewares : function(){
-      logger.info(section('Loading middlewares...'));
-
-      var fixedMiddlewares = require('../middlewares');
-
-      this.util.glob('middlewares/**/*.js').forEach(function (file) {
-        // override middlewares
-        fixedMiddlewares[this.util.basename(file, '.js')] = file;
-
-        logger.info('  ' + this.util.relative(file));
-      }, this);
-
-      var middlewares = config('middlewares') || {};
-
-      // IoC for route-mappings and controllers
-      var findHandler = this._bindRouteMappings(this.router.routes);
-
-      var seen = {},
-          self = this,
-          app = this.app;
-
-      // flatten and require middleware lists
-      function requireMiddlewares(map) {
-        var list = [];
-
-        map.forEach(function (name) {
-          if (middlewares[name]) {
-            Array.prototype.push.apply(list, requireMiddlewares(middlewares[name]))
-          } else if (list.indexOf(name) === -1) {
-            if (!fixedMiddlewares[name]) {
-              throw new Error('Neonode: unknown `' + name + '` middleware');
-            }
-
-            list.push(require(fixedMiddlewares[name]));
-          }
-        });
-
-        return list;
-      }
+      var findHandler = this.router.map(matchers);
+      var fixedControllers = this.controllers;
+      var fixedMiddlewares = config('middlewares') || {};
+      var requireMiddlewares = this._requireMiddlewares.bind(this);
 
       function bindRoute(params) {
-        var factoryController = self.controllers[params.controller];
-        var controller = factoryController();
+        var Controller = fixedControllers[params.controller];
+        var fixedName = Controller.name || Controller.className;
 
         // prepend custom middlewares per route
-        return requireMiddlewares(controller.constructor.use || [])
-          .concat(controller[params.action]);
+        return requireMiddlewares(Controller.use || [], fixedMiddlewares)
+          .concat(function (req, res, next) {
+            var cb = Controller.__handler || (Controller.__handler = fixedName ? new Controller() : Controller)
+
+            cb[params.action].apply(cb, arguments);
+          });
       }
 
-      // app-level middlewares and route-dispatcher
-      app.use(requireMiddlewares(middlewares.http || []).concat(function (req, res, next) {
-        if (seen[req.path]) {
-          return next();
-        }
+      // IoC for route-mappings and controllers
+      findHandler().forEach(function(cb) {
+        this.app[cb.route.verb](cb.route.path, bindRoute(cb));
+      }, this);
 
-        logger.info(dim('Resolving `' + req.path + '` path...'));
+      this.app.use(function (req, res, next) {
+        next(new NotFoundError('Neonode: cannot resolve `' + req.path + '` path'));
+      });
 
-        var matches = findHandler(req.path);
+      return this;
+    },
 
-        if (!matches.length) {
-          return next(new NotFoundError('Neonode: cannot resolve `' + req.path + '` path'));
-        }
-
-        var cb = matches[0];
-
-        if (self.controllers[cb.controller]) {
-          var name = cb.controller + '.' + cb.action;
-
-          logger.info(highlight(name) + dim(' was found, binding...'));
-
-          try {
-            app[cb.route.verb](cb.route.path, bindRoute(cb));
-          } catch (e) {
-            logger.error(highlight(name) + dim(' cannot be bound...'));
-            return next(e);
-          }
-
-          logger.info(highlight(name) + dim(' now responds to ') + highlight(cb.route.path));
-        }
-
-        // short-circuit
-        seen[req.path] = 1;
-
-        next();
-      }));
-
+    _bindCatchAllHandler: function() {
       // built-in error handling
-      app.use(function(err, req, res, next) {
+      this.app.use(function(err, req, res, next) {
         logger.error(err.stack || err.toString());
 
         switch (err.name) {
@@ -295,6 +155,120 @@ var Neonode = Class({}, 'Neonode')({
           break;
         }
       });
+
+      return this;
+    },
+
+    _loadFiles : function(pattern, label, cb) {
+      var files = this.util.glob(pattern);
+
+      if (files.length) {
+        logger.info(section(label));
+        files.forEach(cb || function(file) {
+          logger.info('  ' + this.util.relative(file));
+          require(file);
+        }, this);
+      }
+
+      return this;
+    },
+
+    _serverStop : function(){
+      this.server.close();
+      return this;
+    },
+
+    _serverStart : function(){
+      this._configureApp()
+          ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
+          ._loadFiles('models/**/*.js', 'Loading models...')
+          ._loadControllers()
+          ._setupMiddlewares()
+          ._bindRouteMappings()
+          ._bindCatchAllHandler();
+
+      this.server.listen(config('port'));
+      logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
+      return this;
+    },
+
+    _loadControllers : function(){
+      var fixedControllers = [];
+
+      require('../controllers/BaseController');
+      require('../controllers/RestfulController');
+
+      this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
+        var fixedFile = this.util.relative(file);
+
+        var fileNameArray = fixedFile.split('/');
+
+        logger.info('  ' + fixedFile);
+
+        var ClassOrController = require(file);
+        var controllerName;
+
+        // TODO: lazily load this modules?
+        if (ClassOrController.className && typeof ClassOrController.constructor === 'function') {
+          controllerName = ClassOrController.className.replace('Controller', '');
+        } else {
+          if (!ClassOrController.name) {
+            throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
+          }
+
+          controllerName = ClassOrController.name;
+        }
+
+        if (fileNameArray.length > 2) {
+          fileNameArray.shift(1); // remove the first item of the array (controllers)
+          fileNameArray.pop(1); // remove the last item of the array (filename)
+
+          controllerName = fileNameArray.join('.') + '.' + controllerName;
+        }
+
+        fixedControllers[controllerName] = ClassOrController;
+      });
+
+      this.controllers = fixedControllers;
+
+      return this;
+    },
+
+    // flatten and require middleware lists
+    _requireMiddlewares: function (map, middlewares) {
+      var list = [];
+
+      map.forEach(function (name) {
+        if (middlewares[name]) {
+          Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares))
+        } else if (list.indexOf(name) === -1) {
+          if (!this._middlewares[name]) {
+            throw new Error('Neonode: unknown `' + name + '` middleware');
+          }
+
+          list.push(require(this._middlewares[name]));
+        }
+      }, this);
+
+      return list;
+    },
+
+    _setupMiddlewares : function(){
+      logger.info(section('Loading middlewares...'));
+
+      this._middlewares = require('../middlewares');
+
+      this.util.glob('middlewares/**/*.js').forEach(function (file) {
+        // override middlewares
+        this._middlewares[this.util.basename(file, '.js')] = file;
+
+        logger.info('  ' + this.util.relative(file));
+      }, this);
+
+      // main application middlewares
+      var middlewares = config('middlewares') || {};
+
+      this.app.use(this._requireMiddlewares(middlewares.http || [], middlewares));
 
       return this;
     }
