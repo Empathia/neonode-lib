@@ -96,6 +96,10 @@ Class(Li, 'Spy')({
             this.methodName = config.methodName;
         },
         applySpy : function () {
+            if (this.targetObject.disableLithium) {
+              return;
+            }
+
             var spy;
 
             spy = this;
