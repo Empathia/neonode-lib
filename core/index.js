@@ -99,4 +99,17 @@ if (hasREPL || config('enableLithium')) {
 // standard interfaces
 var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
+
+// Custom Errors
+function NotFoundError(message) {
+  this.name = 'NotFoundError';
+  this.message = message || 'Not Found';
+}
+
+NotFoundError.prototype = Object.create(Error.prototype);
+NotFoundError.prototype.constructor = NotFoundError;
+
+global.NotFoundError = NotFoundError;
+
+// route definitions factory
 Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
