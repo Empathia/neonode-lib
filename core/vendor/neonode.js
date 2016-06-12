@@ -97,10 +97,17 @@ var Neonode = Class({}, 'Neonode')({
 
       function bindRoute(params) {
         var Controller = fixedControllers[params.controller];
+
+        if (!Controller) {
+          return function (req, res, next) {
+            next(new NotFoundError('Neonode: cannot load `' + params.controller + '` controller'));
+          };
+        }
+
         var fixedName = Controller.name || Controller.className;
 
         // prepend custom middlewares per route
-        return requireMiddlewares(Controller.use || [], fixedMiddlewares)
+        return requireMiddlewares(params.route.middleware || Controller.middleware || [], fixedMiddlewares)
           .concat(function (req, res, next) {
             var cb = Controller.__handler || (Controller.__handler = fixedName ? new Controller() : Controller)
 
@@ -179,7 +186,8 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _serverStart : function(){
-      this._configureApp()
+      try {
+        this._configureApp()
           ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
@@ -187,13 +195,17 @@ var Neonode = Class({}, 'Neonode')({
           ._bindRouteMappings()
           ._bindCatchAllHandler();
 
-      this.server.listen(config('port'));
-      logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
+        this.server.listen(config('port'));
+        logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
+      } catch (e) {
+        logger.error(e);
+      }
+
       return this;
     },
 
     _loadControllers : function(){
-      var fixedControllers = [];
+      var fixedControllers = {};
 
       require('../controllers/BaseController');
       require('../controllers/RestfulController');
@@ -208,9 +220,9 @@ var Neonode = Class({}, 'Neonode')({
         var ClassOrController = require(file);
         var controllerName;
 
-        // TODO: lazily load this modules?
+        // Neon support
         if (ClassOrController.className && typeof ClassOrController.constructor === 'function') {
-          controllerName = ClassOrController.className.replace('Controller', '');
+          controllerName = ClassOrController.className;
         } else {
           if (!ClassOrController.name) {
             throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
@@ -226,7 +238,7 @@ var Neonode = Class({}, 'Neonode')({
           controllerName = fileNameArray.join('.') + '.' + controllerName;
         }
 
-        fixedControllers[controllerName] = ClassOrController;
+        fixedControllers[controllerName.replace(/Controller$/, '')] = ClassOrController;
       });
 
       this.controllers = fixedControllers;
