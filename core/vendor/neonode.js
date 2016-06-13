@@ -7,7 +7,8 @@ var dim = clc.blackBright,
     section = clc.bold,
     highlight = clc.yellow;
 
-var routeMappings = require('route-mappings');
+var advisable = require('advisable'),
+    routeMappings = require('route-mappings');
 
 /* global config, logger, Class, NotFoundError */
 var Neonode = Class({}, 'Neonode')({
@@ -21,6 +22,7 @@ var Neonode = Class({}, 'Neonode')({
 
     disableLithium: true,
     controllers : {},
+    advisables : {},
     models : {},
 
     init : function (cwd){
@@ -91,6 +93,7 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var findHandler = this.router.map(matchers);
+      var fixedAdvisables = this.advisables;
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
       var requireMiddlewares = this._requireMiddlewares.bind(this);
@@ -108,6 +111,17 @@ var Neonode = Class({}, 'Neonode')({
         function dispatchRoute() {
           if (!Controller.__handler) {
             Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
+
+            if (fixedAdvisables[params.controller]) {
+              Object.keys(Controller.prototype).forEach(function (prop) {
+                // TODO: blacklist or whitelist?
+                if (prop.charAt() !== '_' && prop !== 'constructor' && prop !== 'init') {
+                  Controller.__handler[prop] = advisable(Controller.__handler[prop]);
+                }
+              });
+
+              fixedAdvisables[params.controller](Controller.__handler);
+            }
           }
 
           Controller.__handler[params.action].apply(Controller.__handler, arguments);
@@ -207,14 +221,11 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _loadControllers : function(){
-      var fixedControllers = {};
-
       require('../controllers/BaseController');
       require('../controllers/RestfulController');
 
       this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
         var fixedFile = this.util.relative(file);
-
         var fileNameArray = fixedFile.split('/');
 
         logger.info('  ' + fixedFile);
@@ -240,10 +251,17 @@ var Neonode = Class({}, 'Neonode')({
           controllerName = fileNameArray.join('.') + '.' + controllerName;
         }
 
-        fixedControllers[controllerName.replace(/Controller$/, '')] = ClassOrController;
-      });
+        // advisable support
+        var advisableFile = this.util.filepath('lib/advisables', controllerName + '.js');
 
-      this.controllers = fixedControllers;
+        controllerName = controllerName.replace(/Controller$/, '');
+
+        if (this.util.isFile(advisableFile)) {
+          this.advisables[controllerName] = require(advisableFile);
+        }
+
+        this.controllers[controllerName] = ClassOrController;
+      });
 
       return this;
     },

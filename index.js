@@ -15,7 +15,6 @@ function tryCall(fn, next) {
     try {
       return fn.apply(null, arguments)[next]();
     } catch (e) {
-      console.log(e);
       // nothing
     }
   };
