@@ -21,8 +21,8 @@ var Neonode = Class({}, 'Neonode')({
     env               : config('environment'),
 
     disableLithium: true,
+    initializers : {},
     controllers : {},
-    advisables : {},
     models : {},
 
     init : function (cwd){
@@ -93,9 +93,9 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var findHandler = this.router.map(matchers);
-      var fixedAdvisables = this.advisables;
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
+      var fixedInitializers = this.initializers;
       var requireMiddlewares = this._requireMiddlewares.bind(this);
 
       function bindRoute(params) {
@@ -112,15 +112,15 @@ var Neonode = Class({}, 'Neonode')({
           if (!Controller.__handler) {
             Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
 
-            if (fixedAdvisables[params.controller]) {
+            if (fixedInitializers[params.controller]) {
               Object.keys(Controller.prototype).forEach(function (prop) {
-                // TODO: blacklist or whitelist?
+                // TODO: advisable-prop, blacklist or whitelist?
                 if (prop.charAt() !== '_' && prop !== 'constructor' && prop !== 'init') {
                   Controller.__handler[prop] = advisable(Controller.__handler[prop]);
                 }
               });
 
-              fixedAdvisables[params.controller](Controller.__handler);
+              fixedInitializers[params.controller](Controller.__handler);
             }
           }
 
@@ -251,13 +251,13 @@ var Neonode = Class({}, 'Neonode')({
           controllerName = fileNameArray.join('.') + '.' + controllerName;
         }
 
-        // advisable support
-        var advisableFile = this.util.filepath('lib/advisables', controllerName + '.js');
+        // initializers support
+        var initFile = this.util.filepath('lib/initializers', controllerName + '.js');
 
         controllerName = controllerName.replace(/Controller$/, '');
 
-        if (this.util.isFile(advisableFile)) {
-          this.advisables[controllerName] = require(advisableFile);
+        if (this.util.isFile(initFile)) {
+          this.initializers[controllerName] = require(initFile);
         }
 
         this.controllers[controllerName] = ClassOrController;
