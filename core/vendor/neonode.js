@@ -80,8 +80,8 @@ var Neonode = Class({}, 'Neonode')({
         var controller = _handler[0];
         var action     = _handler[1] || route.action;
 
-        // logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
-        // logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
+        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
+        logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
 
         matchers.push({
           controller: controller,
@@ -99,22 +99,22 @@ var Neonode = Class({}, 'Neonode')({
         var Controller = fixedControllers[params.controller];
 
         if (!Controller) {
-          logger.warn('Controller `' + params.controller + '` is missing, skipping...');
-
           return function (req, res, next) {
-            next(new NotFoundError('Neonode: cannot load `' + params.controller + '` controller'));
+            next(new NotFoundError('Neonode: controller for `'
+              + params.controller + '.' + params.action + '` is missing'));
           };
         }
 
-        var fixedName = Controller.name || Controller.className;
+        function dispatchRoute() {
+          if (!Controller.__handler) {
+            Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
+          }
+
+          Controller.__handler[params.action].apply(Controller.__handler, arguments);
+        }
 
         // prepend custom middlewares per route
-        return requireMiddlewares(params.route.middleware || Controller.middleware || [], fixedMiddlewares)
-          .concat(function (req, res, next) {
-            var cb = Controller.__handler || (Controller.__handler = fixedName ? new Controller() : Controller)
-
-            cb[params.action].apply(cb, arguments);
-          });
+        return requireMiddlewares(params.route.middleware || [], fixedMiddlewares).concat(dispatchRoute);
       }
 
       // IoC for route-mappings and controllers
