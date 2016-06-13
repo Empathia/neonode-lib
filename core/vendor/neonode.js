@@ -279,11 +279,6 @@ var Neonode = Class({}, 'Neonode')({
         logger.info('  ' + this.util.relative(file));
       }, this);
 
-      // main application middlewares
-      var middlewares = config('middlewares') || {};
-
-      this.app.use(this._requireMiddlewares(middlewares.http || [], middlewares));
-
       return this;
     }
   }
