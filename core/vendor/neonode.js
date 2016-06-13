@@ -99,6 +99,8 @@ var Neonode = Class({}, 'Neonode')({
         var Controller = fixedControllers[params.controller];
 
         if (!Controller) {
+          logger.warn('Controller `' + params.controller + '` is missing, skipping...');
+
           return function (req, res, next) {
             next(new NotFoundError('Neonode: cannot load `' + params.controller + '` controller'));
           };
