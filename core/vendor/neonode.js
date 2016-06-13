@@ -21,8 +21,8 @@ var Neonode = Class({}, 'Neonode')({
     env               : config('environment'),
 
     disableLithium: true,
-    initializers : {},
     controllers : {},
+    advisables : {},
     models : {},
 
     init : function (cwd){
@@ -93,9 +93,9 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var findHandler = this.router.map(matchers);
+      var fixedAdvisables = this.advisables;
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
-      var fixedInitializers = this.initializers;
       var requireMiddlewares = this._requireMiddlewares.bind(this);
 
       function bindRoute(params) {
@@ -112,7 +112,7 @@ var Neonode = Class({}, 'Neonode')({
           if (!Controller.__handler) {
             Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
 
-            if (fixedInitializers[params.controller]) {
+            if (fixedAdvisables[params.controller]) {
               Object.keys(Controller.prototype).forEach(function (prop) {
                 // TODO: advisable-prop, blacklist or whitelist?
                 if (prop.charAt() !== '_' && prop !== 'constructor' && prop !== 'init') {
@@ -120,7 +120,7 @@ var Neonode = Class({}, 'Neonode')({
                 }
               });
 
-              fixedInitializers[params.controller](Controller.__handler);
+              fixedAdvisables[params.controller](Controller.__handler);
             }
           }
 
@@ -204,7 +204,7 @@ var Neonode = Class({}, 'Neonode')({
     _serverStart : function(){
       try {
         this._configureApp()
-          ._loadFiles('config/initializers/**/*.js', 'Loading initializers...')
+          ._loadFiles('lib/initializers/**/*.js', 'Loading initializers...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
           ._setupMiddlewares()
@@ -234,14 +234,14 @@ var Neonode = Class({}, 'Neonode')({
         var controllerName;
 
         // Neon support
-        if (ClassOrController.className && typeof ClassOrController.constructor === 'function') {
-          controllerName = ClassOrController.className;
+        if ((ClassOrController.className || ClassOrController.constructor.className) && typeof ClassOrController.constructor === 'function') {
+          controllerName = ClassOrController.className || ClassOrController.constructor.className;
         } else {
           if (!ClassOrController.name) {
             throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
           }
 
-          controllerName = ClassOrController.name;
+          controllerName = ClassOrController.name || ClassOrController.constructor.name;
         }
 
         if (fileNameArray.length > 2) {
