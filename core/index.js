@@ -106,5 +106,8 @@ var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd)
 // route definitions factory
 Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 
+// shortcut helpers
+global.urlFor = Neonode.router.mappings;
+
 // errors
 require('./support/errors');
