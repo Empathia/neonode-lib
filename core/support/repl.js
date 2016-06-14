@@ -82,24 +82,23 @@ repl.defineCommand('server', {
 });
 
 repl.defineCommand('routes', {
-  help: '...',
+  help: 'Display any registered routes within Neonode',
   action: function(value) {
-    if (!Neonode._fixedMatchers) {
-      logger.warn('cannot retrieve routes, type `.server` and try again');
-      return;
-    }
-
-    Neonode._fixedMatchers.forEach(function (m) {
+    Neonode.router.routes.forEach(function (route) {
       value = value.toLowerCase().trim();
 
       if (!value || (
-        m.controller.toLowerCase().indexOf(value) > -1 ||
-        m.action.toLowerCase().indexOf(value) > -1 ||
-        m.route.verb.toLowerCase().indexOf(value) > -1 ||
-        m.route.path.toLowerCase().indexOf(value) > -1
+        route.verb.toLowerCase().indexOf(value) > -1 ||
+        route.path.toLowerCase().indexOf(value) > -1
       )) {
-        logger.info((m.route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + clc.yellow(m.route.path));
-        logger.info(clc.blackBright('        ' + m.controller + '#' + m.action + '   -> ' + m.route.as + '.url()'));
+        var _handler = route.handler.slice()
+          .concat(route.to ? [route.to] : [])
+          .concat(route.action ? [route.action] : []);
+
+        process.stdout.write(
+          (route.verb.toUpperCase() + '      ').substr(0, 7) + '  ' + clc.yellow(route.path)
+          + '\n' + clc.blackBright(_handler.join('.').replace('#', '.')) + '  -> ' + route.as + '.url()'
+          + '\n');
       }
     });
   }

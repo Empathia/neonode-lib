@@ -70,11 +70,9 @@ var Neonode = Class({}, 'Neonode')({
 
       this.router.routes.forEach(function(route) {
         // append given Foo#bar
-        if (route.to) {
-          route.handler.push(route.to);
-        }
+        var _handler = route.handler.slice().concat(route.to ? [route.to] : []);
 
-        var _handler   = route.handler.join('.').split('#');
+        var _handler   = _handler.join('.').split('#');
         var controller = _handler[0];
         var action     = _handler[1] || route.action;
 
@@ -84,8 +82,6 @@ var Neonode = Class({}, 'Neonode')({
           route: route
         });
       }, this);
-
-      this._fixedMatchers = matchers;
 
       var findHandler = this.router.map(matchers);
       var fixedAdvisables = this.advisables;
