@@ -3,6 +3,8 @@ var path = require('path');
 var REPL = require('repl');
 var Module = require('module');
 
+var clc = require('cli-color');
+
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
 
@@ -14,6 +16,7 @@ if (!Neonode) {
 console.log([
   '',
   '# type `.server [on|off|start|stop]` to manage Express',
+  '# type `.routes [pattern]` to display any defined mappings',
   '# type `.reload [pattern]` to restart the current application',
   ''
 ].join('\n'));
@@ -75,6 +78,30 @@ repl.defineCommand('server', {
       _lastStatus = enableServer;
       setTimeout(reload);
     }
+  }
+});
+
+repl.defineCommand('routes', {
+  help: '...',
+  action: function(value) {
+    if (!Neonode._fixedMatchers) {
+      logger.warn('cannot retrieve routes, type `.server` and try again');
+      return;
+    }
+
+    Neonode._fixedMatchers.forEach(function (m) {
+      value = value.toLowerCase().trim();
+
+      if (!value || (
+        m.controller.toLowerCase().indexOf(value) > -1 ||
+        m.action.toLowerCase().indexOf(value) > -1 ||
+        m.route.verb.toLowerCase().indexOf(value) > -1 ||
+        m.route.path.toLowerCase().indexOf(value) > -1
+      )) {
+        logger.info((m.route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + clc.yellow(m.route.path));
+        logger.info(clc.blackBright('        ' + m.controller + '#' + m.action + '   -> ' + m.route.as + '.url()'));
+      }
+    });
   }
 });
 

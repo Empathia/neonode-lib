@@ -3,10 +3,6 @@ var http     = require('http');
 var morgan   = require('morgan');
 var clc      = require('cli-color');
 
-var dim = clc.blackBright,
-    section = clc.bold,
-    highlight = clc.yellow;
-
 var advisable = require('advisable'),
     routeMappings = require('route-mappings');
 
@@ -26,7 +22,7 @@ var Neonode = Class({}, 'Neonode')({
     models : {},
 
     init : function (cwd){
-      logger.info(section('Initializing application...'));
+      logger.info(clc.bold('Initializing application...'));
 
       this.util = require('../../')(cwd);
       this.express = express;
@@ -46,7 +42,7 @@ var Neonode = Class({}, 'Neonode')({
       // *************************************************************************
       //                  Setup Thulium engine for Express
       // *************************************************************************
-      logger.info(section('Setting Thulium Engine for Express...'));
+      logger.info(clc.bold('Setting Thulium Engine for Express...'));
       this.app.engine('html', require('thulium-express'));
       this.app.set('view engine', 'html');
 
@@ -68,7 +64,7 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _bindRouteMappings : function() {
-      logger.info(section('Registering routes...'));
+      logger.info(clc.bold('Registering routes...'));
 
       var matchers = [];
 
@@ -82,15 +78,14 @@ var Neonode = Class({}, 'Neonode')({
         var controller = _handler[0];
         var action     = _handler[1] || route.action;
 
-        logger.info((route.verb.toUpperCase() + '      ').substr(0, 7) + ' ' + highlight(route.path));
-        logger.info(dim('        ' + controller + '#' + action + '   -> ' + route.as + '.url()'));
-
         matchers.push({
           controller: controller,
           action: action,
           route: route
         });
       }, this);
+
+      this._fixedMatchers = matchers;
 
       var findHandler = this.router.map(matchers);
       var fixedAdvisables = this.advisables;
@@ -186,7 +181,7 @@ var Neonode = Class({}, 'Neonode')({
       var files = this.util.glob(pattern);
 
       if (files.length) {
-        logger.info(section(label));
+        logger.info(clc.bold(label));
         files.forEach(cb || function(file) {
           logger.info('  ' + this.util.relative(file));
           require(file);
@@ -212,7 +207,7 @@ var Neonode = Class({}, 'Neonode')({
           ._bindCatchAllHandler();
 
         this.server.listen(config('port'));
-        logger.info(dim('Server started listening on ') + 'http://localhost:' + config('port'));
+        logger.info(clc.blackBright('Server started listening on ') + 'http://localhost:' + config('port'));
       } catch (e) {
         logger.error(e);
       }
@@ -286,7 +281,7 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _setupMiddlewares : function(){
-      logger.info(section('Loading middlewares...'));
+      logger.info(clc.bold('Loading middlewares...'));
 
       this._middlewares = require('../middlewares');
 
