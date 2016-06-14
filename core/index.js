@@ -47,7 +47,11 @@ try {
   if (!global.hasOwnProperty('CONFIG')) {
     Object.defineProperty(global, 'CONFIG', {
       get: function() {
-        (logger || console).warn('CONFIG is deprecated, use `config()` instead');
+        // experimental feedback...
+        var source = (new Error()).stack.split('\n')[2].trim().split(' ')[2];
+
+        (logger || console).warn('CONFIG is deprecated, use `config()` instead ' + source);
+
         return SETTINGS;
       }
     });
