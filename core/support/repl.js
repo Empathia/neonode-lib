@@ -109,10 +109,10 @@ repl.defineCommand('reload', {
   action: function(name) {
     var files = 0;
 
-    Object.keys(Module._cache).forEach(function(key) {
+    Object.keys(require.cache).forEach(function(key) {
       if (name) {
-        if (path.relative(process.cwd(), key).indexOf(name) > -1) {
-          delete Module._cache[key];
+        if (path.relative(Neonode.cwd, key).indexOf(name) > -1) {
+          delete require.cache[key];
           files += 1;
         }
 
@@ -120,7 +120,7 @@ repl.defineCommand('reload', {
       }
 
       if (key.indexOf('node_modules') === -1) {
-        delete Module._cache[key];
+        delete require.cache[key];
         files += 1;
       }
     });

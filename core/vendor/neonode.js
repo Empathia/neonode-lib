@@ -3,8 +3,7 @@ var http     = require('http');
 var morgan   = require('morgan');
 var clc      = require('cli-color');
 
-var advisable = require('advisable'),
-    routeMappings = require('route-mappings');
+var routeMappings = require('route-mappings');
 
 /* global config, logger, Class, NotFoundError */
 var Neonode = Class({}, 'Neonode')({
@@ -18,18 +17,21 @@ var Neonode = Class({}, 'Neonode')({
 
     disableLithium: true,
     controllers : {},
-    advisables : {},
     models : {},
 
     init : function (cwd){
       logger.info(clc.bold('Initializing application...'));
 
+      // read only
+      Object.defineProperty(this, 'cwd', {
+        get: function () {
+          return cwd;
+        }
+      });
+
       this.util = require('../../')(cwd);
       this.express = express;
       this.http = http;
-
-      this.app = this.express();
-      this.server = this.http.createServer(this.app);
 
       return this;
     },
@@ -39,6 +41,9 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _configureApp : function(){
+      this.app = this.express();
+      this.server = this.http.createServer(this.app);
+
       // *************************************************************************
       //                  Setup Thulium engine for Express
       // *************************************************************************
@@ -84,7 +89,6 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var findHandler = this.router.map(matchers);
-      var fixedAdvisables = this.advisables;
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
       var requireMiddlewares = this._requireMiddlewares.bind(this);
@@ -101,16 +105,6 @@ var Neonode = Class({}, 'Neonode')({
         function dispatchRoute(req, res, next) {
           if (!Controller.__handler) {
             Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
-
-            if (fixedAdvisables[params.controller]) {
-              Object.keys(Controller.prototype).forEach(function (prop) {
-                if (prop.charAt() !== '_' && prop !== 'constructor' && prop !== 'init') {
-                  Controller.__handler[prop] = advisable(Controller.__handler[prop]);
-                }
-              });
-
-              fixedAdvisables[params.controller](Controller.__handler);
-            }
           }
 
           try {
@@ -178,7 +172,9 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _serverStop : function(){
-      this.server.close();
+      if (this.server) {
+        this.server.close();
+      }
       return this;
     },
 
