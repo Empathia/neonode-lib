@@ -1,8 +1,12 @@
 // Custom Errors
 function makeError(errorName, defaultMessage) {
-  function CustomError(message) {
+  function CustomError(message, previousError) {
     this.name = errorName;
-    this.message = defaultMessage;
+    this.message = message || defaultMessage;
+
+    if (previousError) {
+      this.stack = previousError.stack;
+    }
   }
 
   CustomError.prototype = Object.create(Error.prototype);
