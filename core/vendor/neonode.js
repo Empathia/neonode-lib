@@ -89,6 +89,7 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var _handlers = {};
+      var _isRepl = this._REPL;
 
       var findHandler = this.router.map(matchers);
       var fixedControllers = this.controllers;
@@ -114,6 +115,14 @@ var Neonode = Class({}, 'Neonode')({
 
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
+
+          // store references for interactive debug (experimental)
+          if (_isRepl) {
+            global.req = req;
+            global.res = res;
+            global.params = params;
+            global.controller = controllerInstance;
+          }
 
           try {
             controllerMethod.call(controllerInstance, req, res, next);

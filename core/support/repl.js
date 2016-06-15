@@ -13,6 +13,8 @@ if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
 
+Neonode._REPL = true;
+
 console.log([
   '',
   '# type `.server [on|off|start|stop]` to manage Express',
