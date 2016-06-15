@@ -88,6 +88,8 @@ var Neonode = Class({}, 'Neonode')({
         });
       }, this);
 
+      var _handlers = {};
+
       var findHandler = this.router.map(matchers);
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
@@ -103,15 +105,18 @@ var Neonode = Class({}, 'Neonode')({
         }
 
         function dispatchRoute(req, res, next) {
-          // always merge some locals regardless of loaded middlewares
-          res.locals.layout = res.locals.layout || Controller.layout || Controller.__handler.layout || Controller.__handler.constructor.layout;
-
-          if (!Controller.__handler) {
-            Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
+          if (!_handlers[params.controller]) {
+            _handlers[params.controller] = typeof Controller === 'function' ? new Controller() : Controller;
           }
 
+          var controllerInstance = _handlers[params.controller],
+              controllerMethod = controllerInstance[params.action];
+
+          // always merge some locals regardless of loaded middlewares
+          res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
+
           try {
-            Controller.__handler[params.action](req, res, next);
+            controllerMethod.call(controllerInstance, req, res, next);
           } catch (e) {
             next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
           }
