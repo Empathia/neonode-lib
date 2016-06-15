@@ -137,43 +137,27 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _bindCatchAllHandler: function() {
+      var fixedErrors = {
+        NotImplemented: 501,
+        ForbiddenError: 403,
+        NotFoundError: 404
+      };
+
       // built-in error handling
       this.app.use(function(err, req, res, next) {
-        logger.error(err.message || err.toString());
+        var status = fixedErrors[err.name] || 500;
+        var type = status.toString().charAt() === '5' ? 'error' : 'warn';
+
+        logger[type](err.message || err.toString());
 
         if (err.stack) {
-          logger.error(err.stack);
+          logger[type](err.stack);
         }
 
-        switch (err.name) {
-          case 'NotFoundError':
-            res.status(404).render('shared/404.html', {
-              message: err.message,
-              layout: false
-            });
-          break;
-
-          case 'ForbiddenError':
-            res.status(403).render('shared/500.html', {
-              layout: false,
-              error: err.stack
-            });
-          break;
-
-          default:
-            res.status(500).format({
-              html: function () {
-                res.render('shared/500.html', {
-                  layout: false,
-                  error: 'Error:\n\n' + JSON.stringify(err) + '\n\nStack:\n\n' + err.stack
-                });
-              },
-              json: function () {
-                res.json(err);
-              }
-            });
-          break;
-        }
+        res.status(status).render('shared/' + status + '.html', {
+          layout: false,
+          error: err
+        });
       });
 
       return this;

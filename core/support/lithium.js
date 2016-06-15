@@ -27,7 +27,16 @@ Li.Engine.before.push(function beforeEngine(data) {
 
 Li.Engine.error.push(function errorEngine(data) {
   logger.error(clc.red('Lithium Detected an error...'));
-  logger.error(data.error.stack);
+
+  // try to call next()
+  try {
+    if (typeof data.args[2] === 'function' && data.args[2].length === 1) {
+      data.args[2](data.error.stack || data.error);
+    };
+  } catch (e) {
+    logger.error(data.error.stack || data.error);
+    logger.error(e);
+  }
 });
 
 Li.Engine.after.push(function afterEngine(data) {
