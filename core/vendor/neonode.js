@@ -94,18 +94,16 @@ var Neonode = Class({}, 'Neonode')({
 
         if (!Controller) {
           return function (req, res, next) {
-            next(new NotFoundError('Neonode: controller for `'
-              + params.controller + '.' + params.action + '` is missing'));
+            next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` is missing'));
           };
         }
 
-        function dispatchRoute() {
+        function dispatchRoute(req, res, next) {
           if (!Controller.__handler) {
             Controller.__handler = typeof Controller === 'function' ? new Controller() : Controller;
 
             if (fixedAdvisables[params.controller]) {
               Object.keys(Controller.prototype).forEach(function (prop) {
-                // TODO: advisable-prop, blacklist or whitelist?
                 if (prop.charAt() !== '_' && prop !== 'constructor' && prop !== 'init') {
                   Controller.__handler[prop] = advisable(Controller.__handler[prop]);
                 }
@@ -115,7 +113,11 @@ var Neonode = Class({}, 'Neonode')({
             }
           }
 
-          Controller.__handler[params.action].apply(Controller.__handler, arguments);
+          try {
+            Controller.__handler[params.action](req, res, next);
+          } catch (e) {
+            next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
+          }
         }
 
         // prepend custom middlewares per route
@@ -137,7 +139,11 @@ var Neonode = Class({}, 'Neonode')({
     _bindCatchAllHandler: function() {
       // built-in error handling
       this.app.use(function(err, req, res, next) {
-        logger.error(err.stack || err.toString());
+        logger.error(err.message || err.toString());
+
+        if (err.stack) {
+          logger.error(err.stack);
+        }
 
         switch (err.name) {
           case 'NotFoundError':
