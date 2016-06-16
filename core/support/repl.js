@@ -116,11 +116,11 @@ repl.defineCommand('fetch', {
 
     url = url || value || '/';
 
-    process.stdout.write(clc.blackBright(url) + '\n');
+    process.stdout.write(clc.yellow((method || 'get').toUpperCase()) + ' ' + clc.blackBright(url) + '\n');
 
     http[method || 'get']({
       url: 'http://localhost:' + config('port') + url,
-      data: global.data || {}
+      data: global.data
     }, function (err, res) {
       if (err) {
         process.stderr.write(clc.red(err.message || err.toString()) + '\n');
@@ -130,8 +130,6 @@ repl.defineCommand('fetch', {
 
           process.stdout.write(clc.cyan(key) + ': ' + value.toString().split('\n').join('\n' + (new Array(key.length + 3)).join(' ')) + '\n');
         });
-
-        process.stdout.write(clc.blackBright('OK, now ') + clc.bold('req') + clc.blackBright(' and ') + clc.bold('res') + clc.blackBright(' are available\n'));
       }
     });
   }
