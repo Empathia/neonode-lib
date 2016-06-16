@@ -227,11 +227,11 @@ var Neonode = Class({}, 'Neonode')({
         if ((ClassOrController.className || ClassOrController.constructor.className) && typeof ClassOrController.constructor === 'function') {
           controllerName = ClassOrController.className || ClassOrController.constructor.className;
         } else {
-          if (!ClassOrController.name) {
-            throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
-          }
-
           controllerName = ClassOrController.name || ClassOrController.constructor.name;
+        }
+
+        if (!controllerName) {
+          throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
         }
 
         if (fileNameArray.length > 2) {
