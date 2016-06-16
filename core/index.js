@@ -81,14 +81,6 @@ require('neon/stdlib');
 // database first
 require('krypton-orm');
 
-// support disable database access
-var db = config('database');
-
-if (!(!db || db.disabled)) {
-  // Bind a knex instance to all Krypton Models
-  Krypton.Model.knex(require('knex')(db));
-}
-
 // Ultra fast templating engine. See https://github.com/escusado/thulium
 require('thulium');
 
@@ -108,6 +100,15 @@ Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 
 // shortcut helpers
 global.urlFor = Neonode.router.mappings;
+
+// database access
+var db = config('database');
+
+if (!(!db || db.disabled)) {
+  // Bind a knex instance to all Krypton Models
+  global.knex = require('knex')(db);
+  Krypton.Model.knex(knex);
+}
 
 // errors
 require('./support/errors');
