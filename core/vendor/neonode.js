@@ -38,6 +38,27 @@ var Neonode = Class({}, 'Neonode')({
 
     _drawRoutes: function(routes) {
       this.router = routes(routeMappings());
+
+      this._fixedRoutes = this.router.routes;
+      this._fixedMappings = this.router.mappings;
+      this._fixedResources = {};
+
+      // compile all known resources for other purposes
+      this._fixedRoutes.forEach(function (route) {
+        if (route.action) {
+          var resourceName = route.handler[route.handler.length - 1];
+
+          if (!this._fixedResources[resourceName]) {
+            this._fixedResources[resourceName] = {};
+          }
+
+          if (!this._fixedResources[resourceName][route.action]) {
+            this._fixedResources[resourceName][route.action] = route;
+          }
+        }
+      }, this);
+
+      return this;
     },
 
     _configureApp : function(){
@@ -73,7 +94,7 @@ var Neonode = Class({}, 'Neonode')({
 
       var matchers = [];
 
-      this.router.routes.forEach(function(route) {
+      this._fixedRoutes.forEach(function(route) {
         // append given Foo#bar
         var _handler = route.handler.slice().concat(route.to ? [route.to] : []);
 
