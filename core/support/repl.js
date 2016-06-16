@@ -16,14 +16,14 @@ if (!Neonode) {
 
 Neonode._REPL = true;
 
-console.log([
+process.stdout.write([
   '',
   '# type `.fetch [/path|mapping]` to perform requests',
   '# type `.server [on|off|start|stop]` to manage Express',
   '# type `.routes [pattern]` to display any defined mappings',
   '# type `.reload [pattern]` to restart the current application',
-  ''
-].join('\n'));
+  '',
+].join('\n') + '\n');
 
 var enableServer = process.argv.indexOf('--server') > -1;
 
@@ -130,6 +130,8 @@ repl.defineCommand('fetch', {
 
           process.stdout.write(clc.cyan(key) + ': ' + value.toString().split('\n').join('\n' + (new Array(key.length + 3)).join(' ')) + '\n');
         });
+
+        process.stdout.write(clc.blackBright('OK, now ') + clc.bold('req') + clc.blackBright(' and ') + clc.bold('res') + clc.blackBright(' are available\n'));
       }
     });
   }

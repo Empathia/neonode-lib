@@ -120,8 +120,6 @@ var Neonode = Class({}, 'Neonode')({
           if (_isRepl) {
             global.req = req;
             global.res = res;
-            global.params = params;
-            global.controller = controllerInstance;
           }
 
           try {
