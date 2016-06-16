@@ -138,7 +138,7 @@ repl.defineCommand('fetch', {
 repl.defineCommand('routes', {
   help: 'Display any registered routes within Neonode',
   action: function(value) {
-    Neonode.router.routes.forEach(function (route) {
+    (Neonode._fixedRoutes || []).forEach(function (route) {
       value = value.toLowerCase().trim();
 
       if (!value || (
