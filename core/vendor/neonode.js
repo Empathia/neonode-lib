@@ -46,14 +46,21 @@ var Neonode = Class({}, 'Neonode')({
       // compile all known resources for other purposes
       this._fixedRoutes.forEach(function (route) {
         if (route.action) {
-          var resourceName = route.handler[route.handler.length - 1];
+          var keys = route.handler.slice();
+          var obj = this._fixedResources;
 
-          if (!this._fixedResources[resourceName]) {
-            this._fixedResources[resourceName] = {};
+          while (keys.length) {
+            var key = keys.shift();
+
+            if (!obj[key]) {
+              obj[key] = {};
+            }
+
+            obj = obj[key];
           }
 
-          if (!this._fixedResources[resourceName][route.action]) {
-            this._fixedResources[resourceName][route.action] = route;
+          if (!obj[route.action]) {
+            obj[route.action] = route;
           }
         }
       }, this);
