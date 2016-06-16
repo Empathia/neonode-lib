@@ -15,7 +15,7 @@ var Neonode = Class({}, 'Neonode')({
     router            : null,
     env               : config('environment'),
 
-    disableLithium: true,
+    _disableLithium: true,
     controllers : {},
     models : {},
 
@@ -29,7 +29,7 @@ var Neonode = Class({}, 'Neonode')({
         }
       });
 
-      this.util = require('../../')(cwd);
+      this._util = require('../../')(cwd);
       this.express = express;
       this.http = http;
 
@@ -173,12 +173,12 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _loadFiles : function(pattern, label, cb) {
-      var files = this.util.glob(pattern);
+      var files = this._util.glob(pattern);
 
       if (files.length) {
         logger.info(clc.bold(label));
         files.forEach(cb || function(file) {
-          logger.info('  ' + this.util.relative(file));
+          logger.info('  ' + this._util.relative(file));
           require(file);
         }, this);
       }
@@ -217,10 +217,8 @@ var Neonode = Class({}, 'Neonode')({
       require('../controllers/RestfulController');
 
       this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
-        var fixedFile = this.util.relative(file);
+        var fixedFile = this._util.relative(file);
         var fileNameArray = fixedFile.split('/');
-
-        logger.info('  ' + fixedFile);
 
         var ClassOrController = require(file);
         var controllerName;
@@ -244,11 +242,11 @@ var Neonode = Class({}, 'Neonode')({
         }
 
         // initializers support
-        var initFile = this.util.filepath('lib/initializers', controllerName + '.js');
+        var initFile = this._util.filepath('lib/initializers', controllerName + '.js');
 
         controllerName = controllerName.replace(/Controller$/, '');
 
-        if (this.util.isFile(initFile)) {
+        if (this._util.isFile(initFile)) {
           this.initializers[controllerName] = require(initFile);
         }
 
@@ -282,11 +280,11 @@ var Neonode = Class({}, 'Neonode')({
 
       this._middlewares = require('../middlewares');
 
-      this.util.glob('middlewares/**/*.js').forEach(function (file) {
+      this._util.glob('middlewares/**/*.js').forEach(function (file) {
         // override middlewares
-        this._middlewares[this.util.basename(file, '.js')] = file;
+        this._middlewares[this._util.basename(file, '.js')] = file;
 
-        logger.info('  ' + this.util.relative(file));
+        logger.info('  ' + this._util.relative(file));
       }, this);
 
       return this;
