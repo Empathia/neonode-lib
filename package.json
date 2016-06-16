@@ -29,6 +29,7 @@
     "route-mappings": "^0.2.0",
     "thulium": "^2.0.0",
     "thulium-express": "^1.1.2",
+    "very-tiny-http-client": "^1.0.5",
     "winston": "^2.2.0"
   },
   "devDependencies": {

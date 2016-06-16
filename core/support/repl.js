@@ -4,6 +4,7 @@ var REPL = require('repl');
 var Module = require('module');
 
 var clc = require('cli-color');
+var http = require('very-tiny-http-client');
 
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
@@ -17,6 +18,7 @@ Neonode._REPL = true;
 
 console.log([
   '',
+  '# type `.fetch [/path|mapping]` to perform requests',
   '# type `.server [on|off|start|stop]` to manage Express',
   '# type `.routes [pattern]` to display any defined mappings',
   '# type `.reload [pattern]` to restart the current application',
@@ -80,6 +82,56 @@ repl.defineCommand('server', {
       _lastStatus = enableServer;
       setTimeout(reload);
     }
+  }
+});
+
+repl.defineCommand('fetch', {
+  help: 'Make requests from registered mappings',
+  action: function (value) {
+    var url;
+    var method;
+
+    if (value && value.charAt() !== '/') {
+      var values = (value.replace(/\s+/g, ' ') || '').split(' ');
+      var keys = values[0].split('.');
+
+      url = urlFor;
+
+      try {
+        while (keys.length) {
+          url = url[keys.shift()];
+        }
+
+        if (!url) {
+          throw new Error('Neonode: missing `' + value + '` route');
+        }
+
+        method = url.verb;
+        url = url.url.apply(null, values.slice(1));
+      } catch (e) {
+        process.stderr.write(clc.red(e.message || e.toString()) + '\n');
+        return;
+      }
+    }
+
+    url = url || value || '/';
+
+    process.stdout.write(clc.blackBright(url) + '\n');
+
+    http[method || 'get']({
+      url: 'http://localhost:' + config('port') + url,
+      data: global.data || {}
+    }, function (err, res) {
+      if (err) {
+        process.stderr.write(clc.red(err.message || err.toString()) + '\n');
+      } else {
+        Object.keys(res).forEach(function (key) {
+          var value = typeof res[key] === 'object' ? JSON.stringify(res[key], null, 2) : res[key];
+
+          process.stdout.write(clc.cyan(key) + ': ' + value.toString().split('\n').join('\n' + (new Array(key.length + 3)).join(' ')) + '\n');
+        });
+      }
+    });
   }
 });
 
