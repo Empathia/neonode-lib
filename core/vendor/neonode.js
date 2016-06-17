@@ -46,18 +46,14 @@ var Neonode = Class({}, 'Neonode')({
       // compile all known resources for other purposes
       this._fixedRoutes.forEach(function (route) {
         if (route.action) {
-          var keys = route.handler.slice();
-          var obj = this._fixedResources;
+          // TODO: what about the handler namespacing?
+          var key = route.handler[route.handler.length - 1];
 
-          while (keys.length) {
-            var key = keys.shift();
-
-            if (!obj[key]) {
-              obj[key] = {};
-            }
-
-            obj = obj[key];
+          if (!this._fixedResources[key]) {
+            this._fixedResources[key] = {};
           }
+
+          var obj = this._fixedResources[key];
 
           if (!obj[route.action]) {
             obj[route.action] = route;
@@ -128,9 +124,7 @@ var Neonode = Class({}, 'Neonode')({
         var Controller = fixedControllers[params.controller];
 
         if (!Controller) {
-          return function (req, res, next) {
-            next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` is missing'));
-          };
+          throw new Error('Neonode: handler for `' + params.controller + '` is missing');
         }
 
         function dispatchRoute(req, res, next) {
@@ -140,6 +134,10 @@ var Neonode = Class({}, 'Neonode')({
 
           var controllerInstance = _handlers[params.controller],
               controllerMethod = controllerInstance[params.action];
+
+          if (params.route.action && !controllerMethod) {
+            return next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` is missing'));
+          }
 
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
@@ -224,7 +222,7 @@ var Neonode = Class({}, 'Neonode')({
     _serverStart : function(){
       try {
         this._configureApp()
-          ._loadFiles('lib/initializers/**/*.js', 'Loading initializers...')
+          ._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
           ._setupMiddlewares()
@@ -259,7 +257,11 @@ var Neonode = Class({}, 'Neonode')({
         }
 
         if (!controllerName) {
-          throw new Error('Neonode: controller `' + ClassOrController + '` cannot be anonymous');
+          throw new Error('Neonode: controller `' + fixedFile + '` cannot be anonymous');
+        }
+
+        if (controllerName === 'Object') {
+          controllerName = fileNameArray[fileNameArray.length - 1].replace('.js', '');
         }
 
         if (fileNameArray.length > 2) {
@@ -269,16 +271,11 @@ var Neonode = Class({}, 'Neonode')({
           controllerName = fileNameArray.join('.') + '.' + controllerName;
         }
 
-        // initializers support
-        var initFile = this._util.filepath('lib/initializers', controllerName + '.js');
-
         controllerName = controllerName.replace(/Controller$/, '');
 
-        if (this._util.isFile(initFile)) {
-          this.initializers[controllerName] = require(initFile);
-        }
-
         this.controllers[controllerName] = ClassOrController;
+
+        logger.info('  ' + fixedFile);
       });
 
       return this;
