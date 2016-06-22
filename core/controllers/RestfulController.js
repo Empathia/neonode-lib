@@ -62,7 +62,7 @@ module.exports = Class('RestfulController').inherits(BaseController)({
       ['update', 'create', 'destroy'].forEach(function (action) {
         if (!this[action]) {
           this[action] = function (req, res, next) {
-            next(new NotFoundError('Neonode: handler for `' + resourceName + '.' + action + '` is not implemented'));
+            next(new NotFoundError('handler for `' + resourceName + '.' + action + '` is not implemented'));
           };
         }
       }, this);

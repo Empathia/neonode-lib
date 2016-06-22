@@ -103,7 +103,7 @@ repl.defineCommand('fetch', {
         }
 
         if (!url) {
-          throw new Error('Neonode: missing `' + value + '` route');
+          throw new Error('missing `' + value + '` route');
         }
 
         method = url.verb;

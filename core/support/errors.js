@@ -17,4 +17,4 @@ function makeError(errorName, defaultMessage) {
 
 Error.define = makeError;
 Error.define('NotFoundError', 'Not Found');
-Error.define('MissingRoleError', 'Missing role');
+Error.define('UndefinedRoleError', 'Missing role');

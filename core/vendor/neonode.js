@@ -5,7 +5,7 @@ var clc      = require('cli-color');
 
 var routeMappings = require('route-mappings');
 
-/* global config, logger, Class, NotFoundError, MissingRoleError */
+/* global config, logger, Class, NotFoundError, UndefinedRoleError */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -126,7 +126,7 @@ var Neonode = Class({}, 'Neonode')({
         var Controller = fixedControllers[params.controller];
 
         if (!Controller) {
-          throw new Error('Neonode: handler for `' + params.controller + '` is missing');
+          throw new Error('handler for `' + params.controller + '` is missing');
         }
 
         function dispatchRoute(req, res, next) {
@@ -138,7 +138,7 @@ var Neonode = Class({}, 'Neonode')({
               controllerMethod = controllerInstance[params.action];
 
           if (params.route.action && !controllerMethod) {
-            return next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` is missing'));
+            return next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` is missing'));
           }
 
           // always merge some locals regardless of loaded middlewares
@@ -153,7 +153,7 @@ var Neonode = Class({}, 'Neonode')({
           try {
             controllerMethod.call(controllerInstance, req, res, next);
           } catch (e) {
-            next(new NotFoundError('Neonode: handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
+            next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
           }
         }
 
@@ -167,7 +167,7 @@ var Neonode = Class({}, 'Neonode')({
           fixedPipeline.push(function (req, res, next) {
             // health-check
             if (typeof req.role === 'undefined') {
-              next(new MissingRoleError('Neonode: missing `req.role` when accessing `' + resourceName + '` resource'));
+              next(new UndefinedRoleError('missing `req.role` when accessing `' + resourceName + '` resource'));
             } else {
               next();
             }
@@ -186,7 +186,7 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       this.app.use(function (req, res, next) {
-        next(new NotFoundError('Neonode: cannot resolve `' + req.path + '` path'));
+        next(new NotFoundError('cannot resolve `' + req.path + '` path'));
       });
 
       return this;
@@ -279,7 +279,7 @@ var Neonode = Class({}, 'Neonode')({
         }
 
         if (!controllerName) {
-          throw new Error('Neonode: controller `' + fixedFile + '` cannot be anonymous');
+          throw new Error('controller `' + fixedFile + '` cannot be anonymous');
         }
 
         if (controllerName === 'Object') {
@@ -312,7 +312,7 @@ var Neonode = Class({}, 'Neonode')({
           Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares))
         } else if (list.indexOf(name) === -1) {
           if (!this._middlewares[name]) {
-            throw new Error('Neonode: unknown `' + name + '` middleware');
+            throw new Error('unknown `' + name + '` middleware');
           }
 
           list.push(require(this._middlewares[name]));
