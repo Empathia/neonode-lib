@@ -29,7 +29,7 @@
     "route-mappings": "^0.2.0",
     "scandium-express": "0.0.3",
     "thulium": "^2.0.0",
-    "thulium-express": "^1.1.3",
+    "thulium-express": "^1.1.4",
     "very-tiny-http-client": "^1.0.5",
     "winston": "^2.2.0"
   },
