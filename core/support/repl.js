@@ -161,21 +161,17 @@ repl.defineCommand('routes', {
 repl.defineCommand('reload', {
   help: 'Reload modules from the current Neonode instance',
   action: function(name) {
-    // these modules SHOULD be removed from cache due reloading issues
-    var blacklist = /\/(?:scandium\-express)\//;
+    var Module = require('module');
     var files = 0;
 
-    Object.keys(require.cache).forEach(function(key) {
-      if (name) {
-        if (path.relative(Neonode.cwd, key).indexOf(name) > -1) {
-          delete require.cache[key];
-          files += 1;
-        }
-      }
+    Object.keys(Module._cache).forEach(function (moduleName) {
+      var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
+          isRelative = moduleName.indexOf('node_modules') === -1,
+          isBlacklisted  = /scandium|neon/.test(moduleName);
 
-      if (require.cache[key] && (blacklist.test(key) || key.indexOf('node_modules') === -1)) {
-        delete require.cache[key];
-        files += 1;
+      if (isBlacklisted || isRelative || isMatch) {
+        delete Module._cache[moduleName];
+        files++;
       }
     });
 
