@@ -171,11 +171,9 @@ repl.defineCommand('reload', {
           delete require.cache[key];
           files += 1;
         }
-
-        return;
       }
 
-      if (key.indexOf('node_modules') === -1 || blacklist.test(key)) {
+      if (require.cache[key] && (key.indexOf('node_modules') === -1 || blacklist.test(key))) {
         delete require.cache[key];
         files += 1;
       }

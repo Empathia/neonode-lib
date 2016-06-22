@@ -1,3 +1,6 @@
+// TODO: make this more configurable?
+var BLACKLIST = ['Neonode', 'ACL', 'Role', 'Resource', 'Thulium', 'Parser', 'Renderer'];
+
 /**
  * Resolves the global namespace.
  *
@@ -53,8 +56,7 @@ Class(Li, 'ObjectSpy')({
         spy : function (targetObject, configuration) {
             var className = targetObject.className || targetObject.name || targetObject.constructor.className || targetObject.constructor.name;
 
-            // TODO: make this configurable?
-            if (['Neonode', 'ACL', 'Role', 'Resource'].indexOf(className) > -1) {
+            if (BLACKLIST.indexOf(className) > -1) {
               return;
             }
 
