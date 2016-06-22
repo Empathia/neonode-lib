@@ -15,7 +15,6 @@ var Neonode = Class({}, 'Neonode')({
     router            : null,
     env               : config('environment'),
 
-    _disableLithium: true,
     controllers : {},
     models : {},
     acl : {},

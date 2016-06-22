@@ -161,6 +161,8 @@ repl.defineCommand('routes', {
 repl.defineCommand('reload', {
   help: 'Reload modules from the current Neonode instance',
   action: function(name) {
+    // these modules SHOULD be removed from cache due reloading issues
+    var blacklist = /\/(?:scandium\-express)\//;
     var files = 0;
 
     Object.keys(require.cache).forEach(function(key) {
@@ -173,7 +175,7 @@ repl.defineCommand('reload', {
         return;
       }
 
-      if (key.indexOf('node_modules') === -1) {
+      if (key.indexOf('node_modules') === -1 || blacklist.test(key)) {
         delete require.cache[key];
         files += 1;
       }

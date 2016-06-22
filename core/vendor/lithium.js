@@ -51,6 +51,13 @@ Class(Li, 'ObjectSpy')({
             this.spies = [];
         },
         spy : function (targetObject, configuration) {
+            var className = targetObject.className || targetObject.name || targetObject.constructor.className || targetObject.constructor.name;
+
+            // TODO: make this configurable?
+            if (['Neonode', 'ACL', 'Role', 'Resource'].indexOf(className) > -1) {
+              return;
+            }
+
             configuration = configuration || {};
             Object.getOwnPropertyNames(targetObject).forEach(function (property) {
                 var spy;
@@ -96,10 +103,6 @@ Class(Li, 'Spy')({
             this.methodName = config.methodName;
         },
         applySpy : function () {
-            if (this.targetObject._disableLithium) {
-              return;
-            }
-
             var spy;
 
             spy = this;
