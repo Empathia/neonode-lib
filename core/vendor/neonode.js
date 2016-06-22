@@ -323,7 +323,7 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _setupMiddlewares : function(){
-      logger.info(clc.bold('Loading middlewares...'));
+      logger.info(clc.bold('Loading Middlewares...'));
 
       this._middlewares = require('../middlewares');
 
@@ -344,7 +344,11 @@ var Neonode = Class({}, 'Neonode')({
       var aclIndex = this._util.filepath('lib/ACL/index.js');
 
       if (this._util.isFile(aclIndex)) {
+        logger.info(clc.bold('Loading ACL support...'));
+
         var roles = require(aclIndex);
+
+        logger.info('  ' + this._util.relative(aclIndex));
 
         // expand arrays to Sc => GrandParent.Parent.Child
         if (Array.isArray(roles)) {
@@ -367,7 +371,7 @@ var Neonode = Class({}, 'Neonode')({
         var resources = {};
 
         // load resources
-        this._loadFiles('lib/ACL/*/index.js', 'Loading ACL for resources...', function (file) {
+        this._util.glob('lib/ACL/*/index.js').forEach(function (file) {
           resources[this._util.basename(this._util.dirname(file))] = require(file);
           logger.info('  ' + this._util.relative(file));
         });
