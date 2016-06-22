@@ -75,7 +75,7 @@ var Neonode = Class({}, 'Neonode')({
       this.app.engine('html', require('thulium-express'));
       this.app.set('view engine', 'html');
 
-      this.app.set('views', 'views');
+      this.app.set('views', ['views', 'views/build']);
 
       this.app.enable('trust proxy');
 
