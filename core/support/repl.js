@@ -173,7 +173,7 @@ repl.defineCommand('reload', {
         }
       }
 
-      if (require.cache[key] && (key.indexOf('node_modules') === -1 || blacklist.test(key))) {
+      if (require.cache[key] && (blacklist.test(key) || key.indexOf('node_modules') === -1)) {
         delete require.cache[key];
         files += 1;
       }
