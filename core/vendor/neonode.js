@@ -163,7 +163,7 @@ var Neonode = Class({}, 'Neonode')({
         var resourceName = params.route.handler[params.route.handler.length - 1] || params.route.controller;
 
         // append built middleware for this resource
-        if (resourceName && fixedACL.resources[resourceName]) {
+        if (resourceName && fixedACL.resources && fixedACL.resources[resourceName]) {
           fixedPipeline.push(function (req, res, next) {
             // health-check
             if (typeof req.role === 'undefined') {
