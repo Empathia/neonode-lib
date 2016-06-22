@@ -5,7 +5,7 @@ var clc      = require('cli-color');
 
 var routeMappings = require('route-mappings');
 
-/* global config, logger, Class, NotFoundError */
+/* global config, logger, Class, NotFoundError, MissingRoleError */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -18,6 +18,7 @@ var Neonode = Class({}, 'Neonode')({
     _disableLithium: true,
     controllers : {},
     models : {},
+    acl : {},
 
     init : function (cwd){
       logger.info(clc.bold('Initializing application...'));
@@ -115,6 +116,7 @@ var Neonode = Class({}, 'Neonode')({
       var _handlers = {};
       var _isRepl = this._REPL;
 
+      var fixedACL = this.acl;
       var findHandler = this.router.map(matchers);
       var fixedControllers = this.controllers;
       var fixedMiddlewares = config('middlewares') || {};
@@ -155,8 +157,27 @@ var Neonode = Class({}, 'Neonode')({
           }
         }
 
+        var fixedPipeline = requireMiddlewares(params.route.middleware || [], fixedMiddlewares);
+
+        // TODO: route-mappings should provide this detail!
+        var resourceName = params.route.handler[params.route.handler.length - 1] || params.route.controller;
+
+        // append built middleware for this resource
+        if (resourceName && fixedACL.resources[resourceName]) {
+          fixedPipeline.push(function (req, res, next) {
+            // health-check
+            if (typeof req.role === 'undefined') {
+              next(new MissingRoleError('Neonode: missing `req.role` when accessing `' + resourceName + '` resource'));
+            } else {
+              next();
+            }
+          });
+
+          fixedPipeline.push(fixedACL.middlewares[resourceName]);
+        }
+
         // prepend custom middlewares per route
-        return requireMiddlewares(params.route.middleware || [], fixedMiddlewares).concat(dispatchRoute);
+        return fixedPipeline.concat(dispatchRoute);
       }
 
       // IoC for route-mappings and controllers
@@ -226,6 +247,7 @@ var Neonode = Class({}, 'Neonode')({
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()
           ._setupMiddlewares()
+          ._setupScandiumACL()
           ._bindRouteMappings()
           ._bindCatchAllHandler();
 
@@ -311,6 +333,53 @@ var Neonode = Class({}, 'Neonode')({
 
         logger.info('  ' + this._util.relative(file));
       }, this);
+
+      return this;
+    },
+
+    _setupScandiumACL: function () {
+      var _acl = require('../support/acl');
+
+      // main ACL setup
+      var aclIndex = this._util.filepath('lib/ACL/index.js');
+
+      if (this._util.isFile(aclIndex)) {
+        var roles = require(aclIndex);
+
+        // expand arrays to Sc => GrandParent.Parent.Child
+        if (Array.isArray(roles)) {
+          var seen = {};
+
+          roles.forEach(function (role) {
+            var lastRole;
+
+            role.split('.').forEach(function (subRole) {
+              if (!seen[subRole]) {
+                Sc.ACL.addRole(new Sc.Role(subRole), lastRole || []);
+                seen[subRole] = 1;
+              }
+
+              lastRole = [subRole];
+            });
+          });
+        }
+
+        var resources = {};
+
+        // load resources
+        this._loadFiles('lib/ACL/*/index.js', 'Loading ACL for resources...', function (file) {
+          resources[this._util.basename(this._util.dirname(file))] = require(file);
+          logger.info('  ' + this._util.relative(file));
+        });
+
+        var fixedResources = _acl.buildResources(resources);
+        var fixedMiddlewares = _acl.buildMiddlewares(fixedResources);
+
+        this.acl = {
+          resources: fixedResources,
+          middlewares: fixedMiddlewares
+        };
+      }
 
       return this;
     }

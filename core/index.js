@@ -78,6 +78,9 @@ global.logger = require('./support/logger');
 require('neon');
 require('neon/stdlib');
 
+// ACL core
+require('scandium-express');
+
 // database first
 require('krypton-orm');
 

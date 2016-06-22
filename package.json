@@ -27,6 +27,7 @@
     "redis": "^2.6.1",
     "req-flash": "0.0.3",
     "route-mappings": "^0.2.0",
+    "scandium-express": "0.0.3",
     "thulium": "^2.0.0",
     "thulium-express": "^1.1.2",
     "very-tiny-http-client": "^1.0.5",

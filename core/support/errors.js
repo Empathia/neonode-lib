@@ -4,7 +4,7 @@ function makeError(errorName, defaultMessage) {
     this.name = errorName;
     this.message = message || defaultMessage;
 
-    if (previousError) {
+    if (previousError && previousError.stack) {
       this.stack = previousError.stack;
     }
   }
@@ -17,3 +17,4 @@ function makeError(errorName, defaultMessage) {
 
 Error.define = makeError;
 Error.define('NotFoundError', 'Not Found');
+Error.define('MissingRoleError', 'Missing role');
