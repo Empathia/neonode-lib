@@ -1,5 +1,35 @@
 // TODO: make this more configurable?
-var BLACKLIST = ['Neonode', 'ACL', 'Role', 'Resource', 'Thulium', 'Parser', 'Renderer'];
+var BLACKLIST = [
+  // neonode-lib
+  'Neonode',
+
+  // neon
+  'NodeSupport',
+  'CustomEvent',
+
+  // scandium-express
+  'ACL',
+  'Role',
+  'Resource',
+
+  // thulium
+  'Thulium',
+  'Parser',
+  'Renderer',
+  'EjsProcessor',
+
+  // lithium
+  'Spy',
+  'ObjectSpy',
+
+  // krypton-orm
+  'Model',
+  'Knex',
+  'Relation',
+  'QueryBuilder',
+  'ExpressionParser',
+  'ValidationSupport',
+];
 
 /**
  * Resolves the global namespace.
