@@ -51,7 +51,7 @@ module.exports = Class('RestfulController').inherits(BaseController)({
             res.render(this.constructor.template, {
               resources: this.getResources(req.path),
               resourceName: resourceName,
-              resourceParams: this.getParams && this.getParams(req),
+              resourceParams: this.getParams && this.getParams(req, action),
               resourcePartial: resourceName.toLowerCase() + '/' + fixedAction
             });
           };
