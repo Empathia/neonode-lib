@@ -179,13 +179,18 @@ var Neonode = Class({}, 'Neonode')({
         return fixedPipeline.concat(dispatchRoute);
       }
 
+      // default middleware for Express
+      if (fixedMiddlewares.http) {
+        this.app.use(requireMiddlewares(['http'], fixedMiddlewares));
+      }
+
       // IoC for route-mappings and controllers
       findHandler().forEach(function(cb) {
         this.app[cb.route.verb](cb.route.path, bindRoute(cb));
       }, this);
 
       this.app.use(function (req, res, next) {
-        next(new NotFoundError('cannot resolve `' + req.path + '` path'));
+        next(new NotFoundError('cannot resolve `' + req.method.toUpperCase() + ' ' + req.path + '` path'));
       });
 
       return this;
@@ -308,13 +313,19 @@ var Neonode = Class({}, 'Neonode')({
 
       map.forEach(function (name) {
         if (middlewares[name]) {
-          Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares))
+          Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares));
         } else if (list.indexOf(name) === -1) {
           if (!this._middlewares[name]) {
             throw new Error('unknown `' + name + '` middleware');
           }
 
-          list.push(require(this._middlewares[name]));
+          var middleware = require(this._middlewares[name]);
+
+          if (Array.isArray(middleware)) {
+            Array.prototype.push.apply(list, middleware);
+          } else {
+            list.push(middleware);
+          }
         }
       }, this);
 
