@@ -143,7 +143,8 @@ repl.defineCommand('routes', {
 
       if (!value || (
         route.verb.toLowerCase().indexOf(value) > -1 ||
-        route.path.toLowerCase().indexOf(value) > -1
+        route.path.toLowerCase().indexOf(value) > -1 ||
+        route.as.toLowerCase().indexOf(value) > -1
       )) {
         var _handler = route.handler.slice()
           .concat(route.to ? [route.to] : [])
