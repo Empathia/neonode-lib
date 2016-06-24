@@ -102,29 +102,17 @@ var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd)
 Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 
 // shortcut helpers
-if (!global.hasOwnProperty('urlFor')) {
-  Object.defineProperty(global, 'urlFor', {
-    get: function () {
-      return Neonode._fixedMappings;
-    }
-  });
-}
+global.urlFor = Neonode._fixedMappings;
 
 // database access
 var db = config('database');
 
-if (!global.hasOwnProperty('knex')) {
-  Object.defineProperty(global, 'knex', {
-    get: function () {
-      // always return a fresh connection
-      return require('knex')(db);
-    }
-  });
-}
-
 if (!(!db || db.disabled)) {
   // Bind a knex instance to all Krypton Models
+  var knex = require('knex')(db);
+
   Krypton.Model.knex(knex);
+  global.knex = knex;
 }
 
 // errors
