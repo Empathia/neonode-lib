@@ -30,9 +30,19 @@ var Neonode = Class({}, 'Neonode')({
       });
 
       this._util = require('../../')(cwd);
-      this.express = express;
-      this.http = http;
 
+      return this;
+    },
+
+    _initializeApp: function() {
+      this._initialize();
+      return this;
+    },
+
+    _initialize: function (cb) {
+      if (cb) {
+        this._initialize = cb.bind(this);
+      }
       return this;
     },
 
@@ -65,6 +75,8 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _configureApp : function(){
+      this.express = express;
+      this.http = http;
       this.app = this.express();
       this.server = this.http.createServer(this.app);
 
@@ -246,7 +258,9 @@ var Neonode = Class({}, 'Neonode')({
 
     _serverStart : function(){
       try {
-        this._configureApp()
+        this
+          ._initializeApp()
+          ._configureApp()
           ._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadControllers()

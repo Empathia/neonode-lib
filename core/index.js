@@ -78,23 +78,6 @@ global.logger = require('./support/logger');
 require('neon');
 require('neon/stdlib');
 
-// ACL core
-require('scandium-express');
-
-// database first
-require('krypton-orm');
-
-// Ultra fast templating engine. See https://github.com/escusado/thulium
-require('thulium');
-
-// *************************************************************************
-//                        Error monitoring for neon
-// *************************************************************************
-if (hasREPL || config('enableLithium')) {
-  require('./vendor/lithium');
-  require('./support/lithium');
-}
-
 // standard interfaces
 var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
@@ -104,16 +87,36 @@ Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 // shortcut helpers
 global.urlFor = Neonode._fixedMappings;
 
-// database access
-var db = config('database');
+// bootstrap
+Neonode._initialize(function() {
+  // ACL core
+  require('scandium-express');
 
-if (!(!db || db.disabled)) {
-  // Bind a knex instance to all Krypton Models
-  var knex = require('knex')(db);
+  // database first
+  require('krypton-orm');
 
-  Krypton.Model.knex(knex);
-  global.knex = knex;
-}
+  // Ultra fast templating engine. See https://github.com/escusado/thulium
+  require('thulium');
 
-// errors
-require('./support/errors');
+  // *************************************************************************
+  //                        Error monitoring for neon
+  // *************************************************************************
+  if (hasREPL || config('enableLithium')) {
+    require('./vendor/lithium');
+    require('./support/lithium');
+  }
+
+  // database access
+  var db = config('database');
+
+  if (!(!db || db.disabled)) {
+    // Bind a knex instance to all Krypton Models
+    var knex = require('knex')(db);
+
+    Krypton.Model.knex(knex);
+    global.knex = knex;
+  }
+
+  // errors
+  require('./support/errors');
+});
