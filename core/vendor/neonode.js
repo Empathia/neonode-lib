@@ -15,6 +15,7 @@ var Neonode = Class({}, 'Neonode')({
     router            : null,
     env               : config('environment'),
 
+    _initializers: [],
     controllers : {},
     models : {},
     acl : {},
@@ -35,14 +36,18 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _initializeApp: function() {
-      this._initialize();
+      this._initializers.forEach(function(cb) {
+        cb();
+      });
+
       return this;
     },
 
     _initialize: function (cb) {
       if (cb) {
-        this._initialize = cb.bind(this);
+        this._initializers.push(cb.bind(this));
       }
+
       return this;
     },
 
