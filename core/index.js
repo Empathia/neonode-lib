@@ -111,10 +111,7 @@ Neonode._initialize(function() {
 
   if (!(!db || db.disabled)) {
     // Bind a knex instance to all Krypton Models
-    var knex = require('knex')(db);
-
-    Krypton.Model.knex(knex);
-    global.knex = knex;
+    Krypton.Model.knex(require('knex')(db));
   }
 
   // errors
