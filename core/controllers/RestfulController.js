@@ -48,11 +48,17 @@ module.exports = Class('RestfulController').inherits(BaseController)({
           var fixedAction = getAlias(action) || action;
 
           this[action] = function (req, res) {
-            res.render(this.constructor.template, {
-              resources: this.getResources(req.path),
-              resourceName: resourceName,
-              resourceParams: this.getParams && this.getParams(req, action),
-              resourcePartial: resourceName.toLowerCase() + '/' + fixedAction
+            var _tpl = this.constructor.template;
+            var _res = this.getResources(req.path);
+            var _params = this.getParams && this.getParams(req, action);
+
+            Promise.resolve(_params).then(function (fixedParams) {
+              res.render(_tpl, {
+                resources: _res,
+                resourceName: resourceName,
+                resourceParams: fixedParams,
+                resourcePartial: resourceName.toLowerCase() + '/' + fixedAction
+              });
             });
           };
         }
