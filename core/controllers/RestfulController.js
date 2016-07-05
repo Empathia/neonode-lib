@@ -73,16 +73,16 @@ module.exports = Class('RestfulController').inherits(BaseController)({
 
             var _tpl = this.constructor.template;
             var _res = this.getResources(req.path);
-            var _params = this.getParams && this.getParams(req, action);
 
             var _failure = req.session._failure || {};
+            var _params = {};
             var _err;
 
             delete req.session._failure;
 
             function _get(prop, value) {
-              if (typeof prop !== 'string') {
-                throw new Error('Cannot use `old(' + prop + ')` as property');
+              if (!prop) {
+                return _failure.old || {};
               }
 
               return getProp(prop, _failure.old || {}, value || '');
@@ -102,6 +102,13 @@ module.exports = Class('RestfulController').inherits(BaseController)({
               } else {
                 Array.prototype.push.apply(_err, _failure.errors);
               }
+            }
+
+            // shortcut
+            req.old = _get;
+
+            if (this.getParams) {
+              _params = this.getParams(req, action);
             }
 
             Promise.resolve(_params).then(function (fixedParams) {
