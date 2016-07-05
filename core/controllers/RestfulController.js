@@ -67,12 +67,18 @@ module.exports = Class('RestfulController').inherits(BaseController)({
           var fixedAction = getAlias(action) || action;
 
           this[action] = function (req, res) {
+            if (!req.session) {
+              throw new Error('Sessions are required');
+            }
+
             var _tpl = this.constructor.template;
             var _res = this.getResources(req.path);
             var _params = this.getParams && this.getParams(req, action);
 
-            var _failure = req.flash && req.flash()._failure || {};
+            var _failure = req.session._failure || {};
             var _err;
+
+            delete req.session._failure;
 
             function _get(prop, value) {
               if (typeof prop !== 'string') {
@@ -123,6 +129,12 @@ module.exports = Class('RestfulController').inherits(BaseController)({
           var _action = this[action];
 
           this[action] = function (req, res, next) {
+            if (!req.session) {
+              throw new Error('Sessions are required');
+            }
+
+            delete req.session._failure;
+
             var _url;
 
             if (req.body) {
@@ -139,13 +151,11 @@ module.exports = Class('RestfulController').inherits(BaseController)({
             }
 
             Promise.resolve(_result).catch(function (error) {
-              if (req.flash) {
-                req.flash('_failure', {
-                  old: req.body,
-                  errors: error.errors ? error.errors : [error.message || error.toString()],
-                  message: error.errors ? error.message : 'Unexpected error'
-                });
-              }
+              req.session._failure = {
+                old: req.body,
+                errors: error.errors ? error.errors : [error.message || error.toString()],
+                message: error.errors ? error.message : 'Unexpected error'
+              };
 
               if (!_url) {
                 next(error);
