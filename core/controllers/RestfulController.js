@@ -8,6 +8,25 @@ function getAlias(name) {
   })[0];
 }
 
+function getProp(key, from, value) {
+  var obj = from;
+  var keys = key.split('.');
+
+  try {
+    while (keys.length) {
+      obj = obj[keys.shift()];
+    }
+  } catch (e) {
+    obj = value;
+  }
+
+  if (typeof obj === 'undefined') {
+    return value;
+  }
+
+  return obj;
+}
+
 /* global urlFor, Class, BaseController */
 module.exports = Class('RestfulController').inherits(BaseController)({
   resources: [],
@@ -55,20 +74,33 @@ module.exports = Class('RestfulController').inherits(BaseController)({
             var _failure = req.flash && req.flash()._failure || {};
             var _err;
 
+            function _get(prop, value) {
+              if (typeof prop !== 'string') {
+                throw new Error('Cannot use `old(' + prop + ')` as property');
+              }
+
+              return getProp(prop, _failure.old || {}, value || '');
+            }
+
             if (_failure.errors) {
               _err = [];
               _err.message = _failure.message || 'An error ocurred';
 
-              Object.keys(_failure.errors).forEach(function (key) {
-                _err.push({
-                  field: key,
-                  failure: _failure.errors[key]
+              if (!Array.isArray(_failure.errors)) {
+                Object.keys(_failure.errors).forEach(function (key) {
+                  _err.push({
+                    field: key,
+                    failure: _failure.errors[key]
+                  });
                 });
-              });
+              } else {
+                Array.prototype.push.apply(_err, _failure.errors);
+              }
             }
 
             Promise.resolve(_params).then(function (fixedParams) {
               res.render(_tpl, {
+                old: _get,
                 errors: _err,
                 resources: _res,
                 resourceUrl: req.url,
@@ -109,17 +141,16 @@ module.exports = Class('RestfulController').inherits(BaseController)({
             Promise.resolve(_result).catch(function (error) {
               if (req.flash) {
                 req.flash('_failure', {
-                  errors: error.errors,
-                  message: error.message
+                  old: req.body,
+                  errors: error.errors ? error.errors : [error.message || error.toString()],
+                  message: error.errors ? error.message : 'Unexpected error'
                 });
               }
 
-              if (!res.finished) {
-                if (!_url) {
-                  next(error);
-                } else {
-                  res.redirect(_url);
-                }
+              if (!_url) {
+                next(error);
+              } else {
+                res.redirect(_url);
               }
             });
           };
