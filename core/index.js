@@ -21,8 +21,9 @@ if (!util.isFile(configFile)) {
 
 // private
 var SETTINGS = {};
+var logger;
 
-/* global logger, Krypton */
+/* global Krypton */
 
 function config(key, value) {
   var parts = key.split('.');
@@ -72,7 +73,7 @@ if (!util.isDir(logDir)) {
 global.config = config;
 
 // logger interface
-global.logger = require('./support/logger');
+logger = global.logger = require('./support/logger');
 
 // neon core
 require('neon');
