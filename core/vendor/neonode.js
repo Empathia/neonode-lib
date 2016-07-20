@@ -115,12 +115,10 @@ var Neonode = Class({}, 'Neonode')({
       var matchers = [];
 
       this._fixedRoutes.forEach(function(route) {
-        // append given Foo#bar
-        var _handler = route.handler.slice().concat(route.to ? [route.to] : []);
+        var _handler = route.handler.slice();
 
-        var _handler   = _handler.join('.').split('#');
-        var controller = _handler[0];
-        var action     = _handler[1] || route.action;
+        var action     = route._actionName || _handler.pop();
+        var controller = route._resourceName || _handler.pop();
 
         matchers.push({
           controller: controller,
