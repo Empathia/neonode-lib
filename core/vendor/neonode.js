@@ -60,9 +60,9 @@ var Neonode = Class({}, 'Neonode')({
 
       // compile all known resources for other purposes
       this._fixedRoutes.forEach(function (route) {
-        if (route.action) {
+        if (route._isAction) {
           // TODO: what about the handler namespacing?
-          var key = route.handler[route.handler.length - 1];
+          var key = route.handler[route.handler.length - 2];
 
           if (!this._fixedResources[key]) {
             this._fixedResources[key] = {};
@@ -70,8 +70,8 @@ var Neonode = Class({}, 'Neonode')({
 
           var obj = this._fixedResources[key];
 
-          if (!obj[route.action]) {
-            obj[route.action] = route;
+          if (!obj[route._actionName]) {
+            obj[route._actionName] = route;
           }
         }
       }, this);
