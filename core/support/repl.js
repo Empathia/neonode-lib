@@ -5,6 +5,7 @@ var Module = require('module');
 
 var clc = require('cli-color');
 var http = require('very-tiny-http-client');
+var chokidar = require('chokidar');
 
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
@@ -43,6 +44,33 @@ function reload() {
     Neonode._serverStart();
   }
 }
+
+function _reloadFiles(name) {
+  var Module = require('module');
+  var files = 0;
+
+  Object.keys(Module._cache).forEach(function (moduleName) {
+    var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
+        isRelative = moduleName.indexOf('node_modules') === -1,
+        isBlacklisted  = /scandium|neon/.test(moduleName);
+
+    if (isBlacklisted || isRelative || isMatch) {
+      delete Module._cache[moduleName];
+      files++;
+    }
+  });
+
+  setTimeout(reload);
+
+  process.stdout.write(files + ' file'
+    + (files !== 1 ? 's were' : ' was') + ' reloaded\n');
+}
+
+var _watcher = chokidar
+  .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
+  .on('all', function() {
+    _reloadFiles();
+  });
 
 var repl = REPL.start({
   stdout: process.stdout,
@@ -161,24 +189,5 @@ repl.defineCommand('routes', {
 
 repl.defineCommand('reload', {
   help: 'Reload modules from the current Neonode instance',
-  action: function(name) {
-    var Module = require('module');
-    var files = 0;
-
-    Object.keys(Module._cache).forEach(function (moduleName) {
-      var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
-          isRelative = moduleName.indexOf('node_modules') === -1,
-          isBlacklisted  = /scandium|neon/.test(moduleName);
-
-      if (isBlacklisted || isRelative || isMatch) {
-        delete Module._cache[moduleName];
-        files++;
-      }
-    });
-
-    setTimeout(reload);
-
-    process.stdout.write(files + ' file'
-      + (files !== 1 ? 's were' : ' was') + ' reloaded\n');
-  }
+  action: _reloadFiles
 });

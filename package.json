@@ -9,6 +9,7 @@
   "dependencies": {
     "advisable": "github:greduan/advisable",
     "body-parser": "1.15.1",
+    "chokidar": "1.6.0",
     "cli-color": "1.1.0",
     "connect-redis": "3.0.2",
     "cookie-parser": "1.4.3",
