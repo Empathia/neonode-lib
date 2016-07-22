@@ -22,7 +22,7 @@ process.stdout.write([
   '# type `.fetch [/path|mapping]` to perform requests',
   '# type `.server [on|off|start|stop]` to manage Express',
   '# type `.routes [pattern]` to display any defined mappings',
-  '# type `.reload [pattern]` to restart the current application',
+  // '# type `.reload [pattern]` to restart the current application',
   '',
 ].join('\n') + '\n');
 
@@ -33,6 +33,8 @@ if (enableServer) {
 }
 
 function reload() {
+  Module._cache = {};
+
   if (enableServer) {
     Neonode._serverStop();
   }
@@ -41,24 +43,24 @@ function reload() {
   Neonode = require('../../core');
 
   if (enableServer) {
-    Neonode._serverStart();
+    Neonode._serverStart(true);
   }
 }
 
 function _reloadFiles(name) {
-  var Module = require('module');
   var files = 0;
 
-  Object.keys(Module._cache).forEach(function (moduleName) {
-    var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
-        isRelative = moduleName.indexOf('node_modules') === -1,
-        isBlacklisted  = /scandium|neon/.test(moduleName);
+  // Object.keys(Module._cache).forEach(function (moduleName) {
+  //   // var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
+  //   //     isRelative = moduleName.indexOf('node_modules') === -1,
+  //   //     isBlacklisted  = /scandium|neon/.test(moduleName);
 
-    if (isBlacklisted || isRelative || isMatch) {
-      delete Module._cache[moduleName];
-      files++;
-    }
-  });
+  //   // if (isBlacklisted || isRelative || isMatch) {
+  //   //   delete Module._cache[moduleName];
+  //   //   files++;
+  //   // }
+  //   console.log();
+  // });
 
   setTimeout(reload);
 
@@ -187,7 +189,7 @@ repl.defineCommand('routes', {
   }
 });
 
-repl.defineCommand('reload', {
-  help: 'Reload modules from the current Neonode instance',
-  action: _reloadFiles
-});
+// repl.defineCommand('reload', {
+//   help: 'Reload modules from the current Neonode instance',
+//   action: _reloadFiles
+// });

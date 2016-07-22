@@ -21,6 +21,7 @@ if (!util.isFile(configFile)) {
 
 // private
 var SETTINGS = {};
+var Neonode;
 var logger;
 
 /* global Krypton */
@@ -35,39 +36,32 @@ function config(key, value) {
       obj = obj[parts.shift()];
     }
   } catch (e) {
-    (logger || console).warn('Cannot read `' + key  + '` from ' + configFile);
+    logger.warn('Cannot read `' + key  + '` from ' + configFile);
   }
 
   return typeof obj !== 'undefined' ? obj : value;
 }
 
-try {
-  SETTINGS = require(util.filepath(configFile));
+// neon core
+require('neon');
+require('neon/stdlib');
 
-  // CONFIG is too verbose
-  if (!global.hasOwnProperty('CONFIG')) {
-    Object.defineProperty(global, 'CONFIG', {
-      get: function() {
-        // experimental feedback...
-        var source = (new Error()).stack.split('\n')[2].trim().split(' ')[2];
-
-        (logger || console).warn('CONFIG is deprecated, use `config()` instead ' + source);
-
-        return SETTINGS;
-      }
-    });
-  }
-} catch (e) {
-  (logger || console).error('Error loading `' + configFile + '` file');
-  (logger || console).error(e.stack);
-  exit(1);
+// *************************************************************************
+//                        Error monitoring for neon
+// *************************************************************************
+if (hasREPL || process.argv.indexOf('--debug') > -1) {
+  require('./vendor/lithium');
+  require('./support/lithium');
 }
 
-var logDir = util.dirname(config('logFile'));
+// ACL core
+require('scandium-express');
 
-if (!util.isDir(logDir)) {
-  util.mkdirp(logDir, 0744);
-}
+// database first
+require('krypton-orm');
+
+// Ultra fast templating engine. See https://github.com/escusado/thulium
+require('thulium');
 
 // exports global stuff
 global.config = config;
@@ -75,37 +69,44 @@ global.config = config;
 // logger interface
 logger = global.logger = require('./support/logger');
 
-// neon core
-require('neon');
-require('neon/stdlib');
-
 // standard interfaces
-var Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
-
-// route definitions factory
-Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
-
-// shortcut helpers
-global.urlFor = Neonode._fixedMappings;
+Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
 // bootstrap
 Neonode._initialize(function() {
-  // ACL core
-  require('scandium-express');
+  try {
+    SETTINGS = require(util.filepath(configFile));
 
-  // database first
-  require('krypton-orm');
+    // CONFIG is too verbose
+    if (!global.hasOwnProperty('CONFIG')) {
+      Object.defineProperty(global, 'CONFIG', {
+        get: function() {
+          // experimental feedback...
+          var source = (new Error()).stack.split('\n')[2].trim().split(' ')[2];
 
-  // Ultra fast templating engine. See https://github.com/escusado/thulium
-  require('thulium');
+          logger.warn('CONFIG is deprecated, use `config()` instead ' + source);
 
-  // *************************************************************************
-  //                        Error monitoring for neon
-  // *************************************************************************
-  if (hasREPL || config('enableLithium')) {
-    require('./vendor/lithium');
-    require('./support/lithium');
+          return SETTINGS;
+        }
+      });
+    }
+  } catch (e) {
+    logger.error('Error loading `' + configFile + '` file');
+    logger.error(e.stack);
+    exit(1);
   }
+
+  var logDir = util.dirname(config('logFile'));
+
+  if (!util.isDir(logDir)) {
+    util.mkdirp(logDir, 0744);
+  }
+
+  // route definitions factory
+  Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
+
+  // shortcut helpers
+  global.urlFor = Neonode._fixedMappings;
 
   // database access
   var db = config('database');
@@ -117,4 +118,7 @@ Neonode._initialize(function() {
 
   // errors
   require('./support/errors');
+
+  // redefine
+  logger();
 });

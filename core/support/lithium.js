@@ -22,7 +22,7 @@ function heat(level) {
 
 /* global logger, Li */
 Li.Engine.before.push(function beforeEngine(data) {
-  logger.info(clc.blackBright('  -> ' + (data.spy.targetObject.className || data.spy.targetObject.constructor.className || '')  + '.' + data.spy.methodName));
+  logger.debug(clc.blackBright('  -> ' + (data.spy.targetObject.className || data.spy.targetObject.constructor.className || '')  + '.' + data.spy.methodName));
 });
 
 Li.Engine.error.push(function errorEngine(data) {
@@ -40,5 +40,5 @@ Li.Engine.error.push(function errorEngine(data) {
 });
 
 Li.Engine.after.push(function afterEngine(data) {
-  logger.info(clc.blackBright('  <- ' + (data.spy.targetObject.className || data.spy.targetObject.constructor.className || '')  + '.' + data.spy.methodName + ' on ') + heat(data.time) + clc.blackBright(' ms'));
+  logger.debug(clc.blackBright('  <- ' + (data.spy.targetObject.className || data.spy.targetObject.constructor.className || '')  + '.' + data.spy.methodName + ' on ') + heat(data.time) + clc.blackBright(' ms'));
 });
