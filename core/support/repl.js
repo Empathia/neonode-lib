@@ -19,10 +19,10 @@ Neonode._REPL = true;
 
 process.stdout.write([
   '',
-  '# type `.fetch [/path|mapping]` to perform requests',
+  '# type `.fetch [/path|mapping.url]` to perform requests',
   '# type `.server [on|off|start|stop]` to manage Express',
-  '# type `.routes [pattern]` to display any defined mappings',
-  // '# type `.reload [pattern]` to restart the current application',
+  '# type `.routes [...]` to display any defined mappings',
+  '# type `.reload` to restart the current application',
   '',
 ].join('\n') + '\n');
 
@@ -32,9 +32,7 @@ if (enableServer) {
   Neonode._serverStart();
 }
 
-function reload() {
-  Module._cache = {};
-
+function _reload() {
   if (enableServer) {
     Neonode._serverStop();
   }
@@ -43,35 +41,15 @@ function reload() {
   Neonode = require('../../core');
 
   if (enableServer) {
-    Neonode._serverStart(true);
+    Neonode._serverStart();
   }
-}
-
-function _reloadFiles(name) {
-  var files = 0;
-
-  // Object.keys(Module._cache).forEach(function (moduleName) {
-  //   // var isMatch = name && path.relative(Neonode.cwd, moduleName).indexOf(name) > -1,
-  //   //     isRelative = moduleName.indexOf('node_modules') === -1,
-  //   //     isBlacklisted  = /scandium|neon/.test(moduleName);
-
-  //   // if (isBlacklisted || isRelative || isMatch) {
-  //   //   delete Module._cache[moduleName];
-  //   //   files++;
-  //   // }
-  //   console.log();
-  // });
-
-  setTimeout(reload);
-
-  process.stdout.write(files + ' file'
-    + (files !== 1 ? 's were' : ' was') + ' reloaded\n');
 }
 
 var _watcher = chokidar
   .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
   .on('all', function() {
-    _reloadFiles();
+    Module._cache = {};
+    _reload();
   });
 
 var repl = REPL.start({
@@ -110,7 +88,9 @@ repl.defineCommand('server', {
 
     if (_lastStatus !== enableServer) {
       _lastStatus = enableServer;
-      setTimeout(reload);
+      setTimeout(_reload);
+    } else {
+      process.stdout.write(clc.blackBright('Already started!\n'));
     }
   }
 });
@@ -189,7 +169,10 @@ repl.defineCommand('routes', {
   }
 });
 
-// repl.defineCommand('reload', {
-//   help: 'Reload modules from the current Neonode instance',
-//   action: _reloadFiles
-// });
+repl.defineCommand('reload', {
+  help: 'Reload modules from the current Neonode instance',
+  action: function() {
+    Module._cache = {};
+    _reload();
+  }
+});

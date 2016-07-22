@@ -1,3 +1,4 @@
+var path  = require('path');
 var express  = require('express');
 var http     = require('http');
 var morgan   = require('morgan');
@@ -15,7 +16,9 @@ var Neonode = Class({}, 'Neonode')({
     router            : null,
     env               : config('environment'),
 
+    _requiredFiles: [],
     _initializers: [],
+
     controllers : {},
     models : {},
     acl : {},
@@ -33,6 +36,22 @@ var Neonode = Class({}, 'Neonode')({
       this._util = require('../../')(cwd);
 
       return this;
+    },
+
+    _require: function(file) {
+      try {
+        var _module = require(file);
+
+        if (file.indexOf(this.cwd) === 0 &&
+          file.indexOf('node_modules') === -1 &&
+          this._requiredFiles.indexOf(file) === -1) {
+          this._requiredFiles.push(path.relative(this.cwd, file));
+        }
+
+        return _module;
+      } catch (e) {
+        logger.error(e.stack || e.message || e.toString());
+      }
     },
 
     _initializeApp: function() {
@@ -244,8 +263,8 @@ var Neonode = Class({}, 'Neonode')({
       if (files.length) {
         logger.info(clc.bold(label));
         files.forEach(cb || function(file) {
+          this._require(file);
           logger.info('  ' + this._util.relative(file));
-          require(file);
         }, this);
       }
 
@@ -289,7 +308,7 @@ var Neonode = Class({}, 'Neonode')({
         var fixedFile = this._util.relative(file);
         var fileNameArray = fixedFile.split('/');
 
-        var ClassOrController = require(file);
+        var ClassOrController = this._require(file);
         var controllerName;
 
         // Neon support
@@ -336,7 +355,7 @@ var Neonode = Class({}, 'Neonode')({
             throw new Error('unknown `' + name + '` middleware');
           }
 
-          var middleware = require(this._middlewares[name]);
+          var middleware = this._require(this._middlewares[name]);
 
           if (Array.isArray(middleware)) {
             Array.prototype.push.apply(list, middleware);
@@ -352,7 +371,7 @@ var Neonode = Class({}, 'Neonode')({
     _setupMiddlewares : function(){
       logger.info(clc.bold('Loading Middlewares...'));
 
-      this._middlewares = require('../middlewares');
+      this._middlewares = this._require('../middlewares');
 
       this._util.glob('middlewares/**/*.js').forEach(function (file) {
         // override middlewares
@@ -373,7 +392,7 @@ var Neonode = Class({}, 'Neonode')({
       if (this._util.isFile(aclIndex)) {
         logger.info(clc.bold('Loading ACL support...'));
 
-        var roles = require(aclIndex);
+        var roles = this._require(aclIndex);
 
         logger.info('  ' + this._util.relative(aclIndex));
 
@@ -399,9 +418,9 @@ var Neonode = Class({}, 'Neonode')({
 
         // load resources
         this._util.glob('lib/ACL/*/index.js').forEach(function (file) {
-          resources[this._util.basename(this._util.dirname(file))] = require(file);
+          resources[this._util.basename(this._util.dirname(file))] = this._require(file);
           logger.info('  ' + this._util.relative(file));
-        });
+        }, this);
 
         var fixedResources = _acl.buildResources(resources);
         var fixedMiddlewares = _acl.buildMiddlewares(fixedResources);
