@@ -42,22 +42,43 @@ module.exports = Class('RestfulController').inherits(BaseController)({
         scope = urlFor[keys.shift()];
       }
 
-      var fixedResources = this.constructor.resources.map(function (resourceName) {
-        return {
-          name: resourceName,
-          url: scope[resourceName].url()
-        };
+      var fixedResources = [];
+
+      this.constructor.resources.forEach(function (params) {
+        var fixedParams = {};
+
+        if (typeof params === 'string') {
+          params = { items: [params] };
+        }
+
+        Object.keys(params).forEach(function (key) {
+          fixedParams[key] = params[key];
+        });
+
+        fixedParams.items = fixedParams.items.map(function (resource) {
+          var _resource = {};
+
+          _resource.url = scope[resource].url();
+          _resource.name = resource;
+          _resource.isActive = currentUrl.indexOf(resource.url) === 0;
+
+          return _resource;
+        });
+
+        fixedResources.push(fixedParams);
       });
 
-      return fixedResources.map(function (resource) {
-        resource.isActive = currentUrl.indexOf(resource.url) === 0;
-        return resource;
-      });
+      return fixedResources;
     },
     init: function () {
       var resourceName = this.getName();
+      var _resources = [];
 
-      if (this.constructor.resources.indexOf(resourceName) === -1) {
+      this.constructor.resources.forEach(function (res) {
+        Array.prototype.push.apply(_resources, res.items || [res]);
+      });
+
+      if (_resources.indexOf(resourceName) === -1) {
         return;
       }
 
