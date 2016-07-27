@@ -177,15 +177,13 @@ var Neonode = Class({}, 'Neonode')({
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
 
-          // store references for interactive debug (experimental)
-          if (_isRepl) {
-            global.req = req;
-            global.res = res;
-          }
-
           try {
             controllerMethod.call(controllerInstance, req, res, next);
           } catch (e) {
+            if (!controllerMethod) {
+              return next(new Error('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`'));
+            }
+
             next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
           }
         }
