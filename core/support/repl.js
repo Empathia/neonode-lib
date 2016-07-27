@@ -15,8 +15,6 @@ if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
 
-Neonode._REPL = true;
-
 process.stdout.write([
   '',
   '# type `.fetch [/path|mapping.url]` to perform requests',
@@ -39,6 +37,7 @@ function _reload() {
 
   // intentionally re-required
   Neonode = require('../../core');
+  Neonode._REPL = true;
 
   if (enableServer) {
     Neonode._serverStart();
