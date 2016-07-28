@@ -60,7 +60,7 @@ module.exports = Class('RestfulController').inherits(BaseController)({
 
           _resource.url = scope[resource].url();
           _resource.name = resource;
-          _resource.isActive = currentUrl.indexOf(resource.url) === 0;
+          _resource.isActive = currentUrl.indexOf(_resource.url) === 0;
 
           return _resource;
         });
