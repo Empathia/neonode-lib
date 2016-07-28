@@ -25,6 +25,7 @@ process.stdout.write([
 ].join('\n') + '\n');
 
 var enableServer = process.argv.indexOf('--server') > -1;
+var enableWatch = process.argv.indexOf('--watch') > -1;
 
 if (enableServer) {
   Neonode._serverStart();
@@ -44,7 +45,7 @@ function _reload() {
   }
 }
 
-var _watcher = chokidar
+var _watcher = enableWatch && chokidar
   .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
   .on('all', function() {
     clearTimeout(_reload.t);
