@@ -47,8 +47,11 @@ function _reload() {
 var _watcher = chokidar
   .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
   .on('all', function() {
-    Module._cache = {};
-    _reload();
+    clearTimeout(_reload.t);
+    _reload.t = setTimeout(function () {
+      Module._cache = {};
+      _reload();
+    }, 200);
   });
 
 var repl = REPL.start({
