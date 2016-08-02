@@ -73,52 +73,50 @@ logger = global.logger = require('./support/logger');
 Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
 
 // bootstrap
-Neonode._initialize(function() {
-  try {
-    SETTINGS = require(util.filepath(configFile));
+try {
+  SETTINGS = require(util.filepath(configFile));
 
-    // CONFIG is too verbose
-    if (!global.hasOwnProperty('CONFIG')) {
-      Object.defineProperty(global, 'CONFIG', {
-        get: function() {
-          // experimental feedback...
-          var source = (new Error()).stack.split('\n')[2].trim().split(' ')[2];
+  // CONFIG is too verbose
+  if (!global.hasOwnProperty('CONFIG')) {
+    Object.defineProperty(global, 'CONFIG', {
+      get: function() {
+        // experimental feedback...
+        var source = (new Error()).stack.split('\n')[2].trim().split(' ')[2];
 
-          logger.warn('CONFIG is deprecated, use `config()` instead ' + source);
+        logger.warn('CONFIG is deprecated, use `config()` instead ' + source);
 
-          return SETTINGS;
-        }
-      });
-    }
-  } catch (e) {
-    logger.error('Error loading `' + configFile + '` file');
-    logger.error(e.stack);
-    exit(1);
+        return SETTINGS;
+      }
+    });
   }
+} catch (e) {
+  logger.error('Error loading `' + configFile + '` file');
+  logger.error(e.stack);
+  exit(1);
+}
 
-  var logDir = util.dirname(config('logFile'));
+var logDir = util.dirname(config('logFile'));
 
-  if (!util.isDir(logDir)) {
-    util.mkdirp(logDir, 0744);
-  }
+if (!util.isDir(logDir)) {
+  util.mkdirp(logDir, 0744);
+}
 
-  // route definitions factory
-  Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
+// route definitions factory
+Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 
-  // shortcut helpers
-  global.urlFor = Neonode._fixedMappings;
+// shortcut helpers
+global.urlFor = Neonode._fixedMappings;
 
-  // database access
-  var db = config('database');
+// database access
+var db = config('database');
 
-  if (!(!db || db.disabled)) {
-    // Bind a knex instance to all Krypton Models
-    Krypton.Model.knex(require('knex')(db));
-  }
+if (!(!db || db.disabled)) {
+  // Bind a knex instance to all Krypton Models
+  Krypton.Model.knex(require('knex')(db));
+}
 
-  // errors
-  require('./support/errors');
+// errors
+require('./support/errors');
 
-  // redefine
-  logger();
-});
+// redefine
+logger();
