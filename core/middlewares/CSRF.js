@@ -6,6 +6,14 @@ module.exports = (function() {
     };
   }
 
+  if (config('sessions.csrf') === false) {
+    return function (req, res, next) {
+      req.csrfToken = 'testToken';
+      res.locals.csrfToken = req.csrfToken;
+      next();
+    };
+  }
+
   return [
     require('csurf')(),
     function (req, res, next) {
