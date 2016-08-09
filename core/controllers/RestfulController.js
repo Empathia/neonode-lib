@@ -58,8 +58,19 @@ module.exports = Class('RestfulController').inherits(BaseController)({
         fixedParams.items = fixedParams.items.map(function (resource) {
           var _resource = {};
 
-          _resource.url = scope[resource].url();
-          _resource.name = resource;
+          if (typeof resource === 'string') {
+            _resource.url = scope[resource].url();
+            _resource.name = resource;
+          } else {
+            Object.keys(resource).forEach(function (key) {
+              _resource[key] = resource[key];
+            });
+
+            if (_resource.url.charAt() !== '/') {
+              _resource.url = urlFor(_resource.url).url();
+            }
+          }
+
           _resource.isActive = currentUrl.indexOf(_resource.url) === 0;
 
           return _resource;
@@ -134,6 +145,7 @@ module.exports = Class('RestfulController').inherits(BaseController)({
 
             Promise.resolve(_params).then(function (fixedParams) {
               res.render(_tpl, {
+                opts: req.query,
                 old: _get,
                 errors: _err,
                 resources: _res,
