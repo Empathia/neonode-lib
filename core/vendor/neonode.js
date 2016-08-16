@@ -177,6 +177,10 @@ var Neonode = Class({}, 'Neonode')({
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
 
+          if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            res.locals.layout = false;
+          }
+
           try {
             controllerMethod.call(controllerInstance, req, res, next);
           } catch (e) {
