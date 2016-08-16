@@ -18,6 +18,7 @@ module.exports = (function() {
     require('csurf')(),
     function (req, res, next) {
       res.locals.csrfToken = req.csrfToken();
+      delete req.body._csrf;
       next();
     },
     function (err, req, res, next) {
