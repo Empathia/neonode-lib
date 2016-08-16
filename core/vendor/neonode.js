@@ -6,6 +6,25 @@ var clc      = require('cli-color');
 
 var routeMappings = require('route-mappings');
 
+function getProp(key, from, value) {
+  var obj = from;
+  var keys = key.split('.');
+
+  try {
+    while (keys.length) {
+      obj = obj[keys.shift()];
+    }
+  } catch (e) {
+    obj = value;
+  }
+
+  if (typeof obj === 'undefined') {
+    return value;
+  }
+
+  return obj;
+}
+
 /* global config, logger, Class, NotFoundError, UndefinedRoleError */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
@@ -181,14 +200,78 @@ var Neonode = Class({}, 'Neonode')({
             res.locals.layout = false;
           }
 
+          var _url;
+          var _next;
+          var _result;
+
+          if (req.body._url) {
+            _url = req.body._url;
+            delete req.body._url;
+          }
+
+          var _failure = req.session._failure || {};
+          var _err;
+
+          delete req.session._failure;
+
+          function _get(prop, value) {
+            if (!prop) {
+              return _failure.old || {};
+            }
+
+            return getProp(prop, _failure.old || {}, value || '');
+          }
+
+          if (_failure.errors) {
+            _err = [];
+            _err.message = _failure.message || 'An error ocurred';
+
+            if (!Array.isArray(_failure.errors)) {
+              Object.keys(_failure.errors).forEach(function (key) {
+                _err.push({
+                  field: key,
+                  failure: _failure.errors[key]
+                });
+              });
+            } else {
+              Array.prototype.push.apply(_err, _failure.errors);
+            }
+          }
+
+          // shortcuts
+          req.old = _get;
+          req.errors = _err;
+
+          res.locals.old = _get;
+          res.locals.errors = _err;
+
           try {
-            controllerMethod.call(controllerInstance, req, res, next);
+            _result = controllerMethod.call(controllerInstance, req, res, function (e) {
+              _next = e;
+              next(e);
+            });
           } catch (e) {
             if (!controllerMethod) {
               return next(new Error('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`'));
             }
 
             next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
+          }
+
+          if (!_next) {
+            return Promise.resolve(_result).catch(function (error) {
+              req.session._failure = {
+                old: req.body,
+                errors: error.errors ? error.errors : [error.message || error.toString()],
+                message: error.errors ? error.message : error.name || 'Unexpected error'
+              };
+
+              if (!_url) {
+                next(error);
+              } else {
+                res.redirect(_url);
+              }
+            })
           }
         }
 
