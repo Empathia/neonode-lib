@@ -210,32 +210,41 @@ var Neonode = Class({}, 'Neonode')({
           }
 
           var _failure = req.session._failure || {};
+          var _old = _failure.old || {};
           var _err;
 
+          delete _failure.old;
           delete req.session._failure;
 
           function _get(prop, value) {
             if (!prop) {
-              return _failure.old || {};
+              return _old;
             }
 
-            return getProp(prop, _failure.old || {}, value || '');
+            return getProp(prop, _old, value || '');
           }
 
           if (_failure.errors) {
-            _err = [];
-            _err.message = _failure.message || 'An error ocurred';
-
             if (!Array.isArray(_failure.errors)) {
-              Object.keys(_failure.errors).forEach(function (key) {
-                _err.push({
-                  field: key,
-                  failure: _failure.errors[key]
+              _failure.errors = Object.keys(_failure.errors)
+                .map(function (_key) {
+                  return { field: _key, failure: _failure.errors[_key] };
                 });
-              });
-            } else {
-              Array.prototype.push.apply(_err, _failure.errors);
             }
+
+            // normalize all given errors
+            _failure.errors = _failure.errors.map(function (_error) {
+              if (typeof _error === 'string') {
+                return {
+                  message: _error
+                };
+              }
+
+              return _error;
+            });
+
+            _err = _failure.errors;
+            _err.label = _failure.label;
           }
 
           // shortcuts
@@ -261,8 +270,8 @@ var Neonode = Class({}, 'Neonode')({
             .catch(function (error) {
               req.session._failure = {
                 old: req.body,
-                errors: error.errors ? error.errors : [error.message || error.toString()],
-                message: error.errors ? error.message : error.name || 'Unexpected error'
+                label: error.label || error.message || error.name,
+                errors: error.errors ? error.errors : [error.message || error.toString()]
               };
 
               if (!_url) {
