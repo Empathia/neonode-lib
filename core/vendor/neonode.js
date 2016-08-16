@@ -270,7 +270,7 @@ var Neonode = Class({}, 'Neonode')({
             .catch(function (error) {
               req.session._failure = {
                 old: req.body,
-                label: error.label || error.message || error.name,
+                label: error.errors ? error.label || error.message : error.label || error.name,
                 errors: error.errors ? error.errors : [error.message || error.toString()]
               };
 
