@@ -248,18 +248,17 @@ var Neonode = Class({}, 'Neonode')({
           try {
             _result = controllerMethod.call(controllerInstance, req, res, function (e) {
               _next = e;
-              next(e);
             });
           } catch (e) {
             if (!controllerMethod) {
-              return next(new Error('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`'));
+              _next = new Error('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`');
+            } else {
+              _next = new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e);
             }
-
-            next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e));
           }
 
-          if (!_next) {
-            return Promise.resolve(_result).catch(function (error) {
+          return (_next ? Promise.reject(_next) : Promise.resolve(_result))
+            .catch(function (error) {
               req.session._failure = {
                 old: req.body,
                 errors: error.errors ? error.errors : [error.message || error.toString()],
@@ -271,8 +270,7 @@ var Neonode = Class({}, 'Neonode')({
               } else {
                 res.redirect(_url);
               }
-            })
-          }
+            });
         }
 
         var fixedPipeline = requireMiddlewares(params.route.middleware || [], fixedMiddlewares);
