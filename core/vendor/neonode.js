@@ -381,6 +381,7 @@ var Neonode = Class({}, 'Neonode')({
           ._configureApp()
           ._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
           ._loadFiles('models/**/*.js', 'Loading models...')
+          ._loadMailers()
           ._loadControllers()
           ._setupMiddlewares()
           ._setupScandiumACL()
@@ -528,7 +529,12 @@ var Neonode = Class({}, 'Neonode')({
       }
 
       return this;
-    }
+    },
+
+    _loadMailers: function() {
+      require('../mailers/BaseMailer');
+      return this._loadFiles('lib/mailers/**/*.js', 'Loading mailers...');
+    },
   }
 });
 
