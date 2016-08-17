@@ -198,6 +198,8 @@ var Neonode = Class({}, 'Neonode')({
 
           if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
             res.locals.layout = false;
+            req.isXMLHttpRequest = true;
+            res.locals.isXMLHttpRequest = true;
           }
 
           var _url;
@@ -250,9 +252,11 @@ var Neonode = Class({}, 'Neonode')({
           // shortcuts
           req.old = _get;
           req.errors = _err;
+          req.redirectUrl = _url;
 
           res.locals.old = _get;
           res.locals.errors = _err;
+          res.locals.redirectUrl = _url;
 
           try {
             _result = controllerMethod.call(controllerInstance, req, res, function (e) {
