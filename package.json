@@ -4,10 +4,10 @@
   "description": "Common libraries and support extracted from Neonode",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint core"
+    "lint": "eslint core index.js"
   },
   "dependencies": {
-    "advisable": "github:greduan/advisable",
+    "bluebird": "^3.4.1",
     "body-parser": "1.15.1",
     "chokidar": "1.6.0",
     "cli-color": "1.1.0",
@@ -35,6 +35,9 @@
     "winston": "2.2.0"
   },
   "devDependencies": {
-    "eslint": "2.12.0"
+    "chai": "^3.5.0",
+    "eslint": "2.12.0",
+    "mocha": "^3.0.2",
+    "superagent": "^2.2.0"
   }
 }
