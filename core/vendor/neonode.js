@@ -141,7 +141,7 @@ var Neonode = Class({}, 'Neonode')({
 
       // *************************************************************************
       //                            Request Logging
-      // *************************************************************************      console.log('NEO', config('environment'));
+      // *************************************************************************
 
       if (config('environment') !== 'test') {
         this.app.use(morgan('combined', {stream: logger.stream}));
