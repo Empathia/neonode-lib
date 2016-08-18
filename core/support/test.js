@@ -41,6 +41,7 @@ Neonode._initialize(function () {
 // common helper
 function fetch(resource) {
   var _promise = null;
+  var _failed = null;
   var _stack = [];
   var _data;
 
@@ -49,7 +50,7 @@ function fetch(resource) {
 
   function load() {
     if (!_promise) {
-      _promise = new Bluebird(function (resolve, reject) {
+      _promise = new Bluebird(function (resolve) {
         var req = sa.agent()[resource.verb](url)
           .set('Accept', 'text/html');
 
@@ -59,10 +60,10 @@ function fetch(resource) {
 
         return req.end(function (err, res) {
           if (err) {
-            reject(err);
-          } else {
-            resolve(res);
+            _failed = err;
           }
+
+          resolve(res);
         });
       });
     }
@@ -91,7 +92,11 @@ function fetch(resource) {
 
   it.err = function (code) {
     _stack.push(function (res) {
-      expect(res.error).to.equal(true);
+      if (!_failed) {
+        throw new Error('`' + resource.verb.toUpperCase() + ' ' + url + '` was expected to fail');
+      }
+
+      expect(res.ok).to.equal(false);
       expect(res.status).to.equal(code || 500);
     });
 
