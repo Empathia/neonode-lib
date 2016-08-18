@@ -37,7 +37,7 @@ function init() {
 }
 
 logger = new winston.Logger({
-  transports: []
+  transports: [devLogger]
 });
 
 module.exports = function() {

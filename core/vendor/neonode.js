@@ -141,8 +141,11 @@ var Neonode = Class({}, 'Neonode')({
 
       // *************************************************************************
       //                            Request Logging
-      // *************************************************************************
-      this.app.use(morgan('combined', {stream: logger.stream}));
+      // *************************************************************************      console.log('NEO', config('environment'));
+
+      if (config('environment') !== 'test') {
+        this.app.use(morgan('combined', {stream: logger.stream}));
+      }
 
       return this;
     },
