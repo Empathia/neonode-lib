@@ -43,7 +43,7 @@ var Neonode = Class({}, 'Neonode')({
     acl : {},
 
     init : function (cwd){
-      logger.info(clc.bold('Initializing application...'));
+      // logger.info(clc.bold('Initializing application...'));
 
       // read only
       Object.defineProperty(this, 'cwd', {
