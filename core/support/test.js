@@ -103,5 +103,10 @@ function fetch(resource) {
     return it;
   };
 
+  it.then = function (cb) {
+    _stack.push(cb);
+    return it;
+  };
+
   return it;
 }
