@@ -380,11 +380,11 @@ var Neonode = Class({}, 'Neonode')({
     _serverStart : function(){
       try {
         this
-          ._initializeApp()
           ._configureApp()
           ._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
           ._loadFiles('models/**/*.js', 'Loading models...')
           ._loadMailers()
+          ._initializeApp()
           ._loadControllers()
           ._setupMiddlewares()
           ._setupScandiumACL()
