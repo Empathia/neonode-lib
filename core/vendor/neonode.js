@@ -289,7 +289,7 @@ var Neonode = Class({}, 'Neonode')({
             });
         }
 
-        var fixedPipeline = requireMiddlewares(params.route.middleware || [], fixedMiddlewares);
+        var fixedPipeline = requireMiddlewares(params.route.middleware || [], fixedMiddlewares, params.route.skip);
 
         // TODO: route-mappings should provide this detail!
         var resourceName = params.route.handler[params.route.handler.length - 1] || params.route.controller;
@@ -444,12 +444,16 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     // flatten and require middleware lists
-    _requireMiddlewares: function (map, middlewares) {
+    _requireMiddlewares: function (map, middlewares, skippedMiddlewares) {
       var list = [];
 
       map.forEach(function (name) {
+        if (skippedMiddlewares && skippedMiddlewares.indexOf(name) > -1) {
+          return;
+        }
+
         if (middlewares[name]) {
-          Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares));
+          Array.prototype.push.apply(list, this._requireMiddlewares(middlewares[name], middlewares, skippedMiddlewares));
         } else if (list.indexOf(name) === -1) {
           if (!this._middlewares[name]) {
             throw new Error('unknown `' + name + '` middleware');
