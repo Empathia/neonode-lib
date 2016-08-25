@@ -84,7 +84,9 @@ function fetch(resource) {
   it.ok = function (code) {
     _stack.push(function (res) {
       if (_failed) {
-        throw new Error('`' + resource.verb.toUpperCase() + ' ' + url + '` was not expected to fail');
+        var _message = '`' + resource.verb.toUpperCase() + ' ' + url + '` was not expected to fail';
+
+        throw new Error(_message + (res.text ? ' (' + res.text + ')' : ''));
       }
 
       expect(res.ok).to.equal(true);
@@ -97,7 +99,9 @@ function fetch(resource) {
   it.err = function (code) {
     _stack.push(function (res) {
       if (!_failed) {
-        throw new Error('`' + resource.verb.toUpperCase() + ' ' + url + '` was expected to fail');
+        var _message = '`' + resource.verb.toUpperCase() + ' ' + url + '` was expected to fail';
+
+        throw new Error(_message + (res.text ? ' (' + res.text + ')' : ''));
       }
 
       expect(res.ok).to.equal(false);
