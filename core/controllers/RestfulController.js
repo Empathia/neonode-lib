@@ -1,3 +1,5 @@
+/* global urlFor, Class, BaseController, Promise, NotFoundError */
+
 var aliases = {
   form: ['update', 'edit', 'new']
 };
@@ -8,26 +10,6 @@ function getAlias(name) {
   })[0];
 }
 
-function getProp(key, from, value) {
-  var obj = from;
-  var keys = key.split('.');
-
-  try {
-    while (keys.length) {
-      obj = obj[keys.shift()];
-    }
-  } catch (e) {
-    obj = value;
-  }
-
-  if (typeof obj === 'undefined') {
-    return value;
-  }
-
-  return obj;
-}
-
-/* global urlFor, Class, BaseController */
 module.exports = Class('RestfulController').inherits(BaseController)({
   resources: [],
   template: 'admin/index',
@@ -99,55 +81,17 @@ module.exports = Class('RestfulController').inherits(BaseController)({
           var fixedAction = getAlias(action) || action;
 
           this[action] = function (req, res) {
-            if (!req.session) {
-              throw new Error('Sessions are required');
-            }
-
             var _tpl = this.constructor.template;
             var _res = this.getResources(req.path);
-
-            var _failure = req.session._failure || {};
             var _params = {};
-            var _err;
-
-            delete req.session._failure;
-
-            function _get(prop, value) {
-              if (!prop) {
-                return _failure.old || {};
-              }
-
-              return getProp(prop, _failure.old || {}, value || '');
-            }
-
-            if (_failure.errors) {
-              _err = [];
-              _err.message = _failure.message || 'An error ocurred';
-
-              if (!Array.isArray(_failure.errors)) {
-                Object.keys(_failure.errors).forEach(function (key) {
-                  _err.push({
-                    field: key,
-                    failure: _failure.errors[key]
-                  });
-                });
-              } else {
-                Array.prototype.push.apply(_err, _failure.errors);
-              }
-            }
-
-            // shortcut
-            req.old = _get;
 
             if (this.getParams) {
               _params = this.getParams(req, action);
             }
 
-            Promise.resolve(_params).then(function (fixedParams) {
+            return Promise.resolve(_params).then(function (fixedParams) {
               res.render(_tpl, {
                 opts: req.query,
-                old: _get,
-                errors: _err,
                 resources: _res,
                 resourceUrl: req.url,
                 resourceName: resourceName,
@@ -173,36 +117,15 @@ module.exports = Class('RestfulController').inherits(BaseController)({
               throw new Error('Sessions are required');
             }
 
-            delete req.session._failure;
-
-            var _url;
-
-            if (req.body) {
-              _url = req.body._url;
-              delete req.body._url;
-            }
-
             var _result;
 
             try {
               _result = _action.call(this, req, res);
             } catch (_e) {
-              return next(e);
+              return next(_e);
             }
 
-            Promise.resolve(_result).catch(function (error) {
-              req.session._failure = {
-                old: req.body,
-                errors: error.errors ? error.errors : [error.message || error.toString()],
-                message: error.errors ? error.message : 'Unexpected error'
-              };
-
-              if (!_url) {
-                next(error);
-              } else {
-                res.redirect(_url);
-              }
-            });
+            return Promise.resolve(_result);
           };
         }
       }, this);
