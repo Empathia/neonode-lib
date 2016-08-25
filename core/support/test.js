@@ -83,6 +83,10 @@ function fetch(resource) {
 
   it.ok = function (code) {
     _stack.push(function (res) {
+      if (_failed) {
+        throw new Error('`' + resource.verb.toUpperCase() + ' ' + url + '` was not expected to fail');
+      }
+
       expect(res.ok).to.equal(true);
       expect(res.status).to.equal(code || 200);
     });
