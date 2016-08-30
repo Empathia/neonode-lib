@@ -52,7 +52,8 @@ function fetch(resource) {
     if (!_promise) {
       _promise = new Bluebird(function (resolve) {
         var req = sa.agent()[resource.verb](url)
-          .set('Accept', 'text/html');
+          .set('Accept', 'text/html')
+          .type('form');
 
         if (_data) {
           req.send(typeof _data === 'function' ? _data(req) : _data);
