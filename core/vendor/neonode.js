@@ -340,7 +340,7 @@ var Neonode = Class({}, 'Neonode')({
       };
 
       // built-in error handling
-      this.app.use(function(err, req, res) {
+      this.app.use(function(err, req, res, next) {
         var status = fixedErrors[err.name] || 500;
         var type = status.toString().charAt() === '5' ? 'error' : 'warn';
 
@@ -352,6 +352,7 @@ var Neonode = Class({}, 'Neonode')({
 
         res.status(status).render('shared/' + status + '.html', {
           layout: false,
+          _next: next,
           error: err
         });
       });
