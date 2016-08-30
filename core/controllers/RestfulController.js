@@ -1,4 +1,4 @@
-/* global urlFor, Class, BaseController, Promise, NotFoundError */
+/* global urlFor, Class, BaseController, Promise, NotImplemented */
 
 var aliases = {
   form: ['update', 'edit', 'new']
@@ -107,7 +107,7 @@ module.exports = Class('RestfulController').inherits(BaseController)({
       ['update', 'create', 'destroy'].forEach(function (action) {
         if (!this[action]) {
           this[action] = function (req, res, next) {
-            next(new NotFoundError('handler for `' + resourceName + '.' + action + '` is not implemented'));
+            next(new NotImplemented('handler for `' + resourceName + '.' + action + '` is not implemented'));
           };
         } else {
           var _action = this[action];

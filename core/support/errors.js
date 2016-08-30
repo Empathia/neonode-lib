@@ -1,6 +1,6 @@
 // Custom Errors
 function makeError(errorName, defaultMessage) {
-  function CustomError(message, previousError) {
+  function CustomError(message) {
     var _data;
 
     if (typeof message === 'object' && message !== null) {
@@ -11,10 +11,6 @@ function makeError(errorName, defaultMessage) {
     this.name = errorName;
     this.label = defaultMessage;
     this.message = message || defaultMessage;
-
-    if (previousError && previousError.stack) {
-      this.stack = previousError.stack;
-    }
 
     // allow plain objects to extend only
     if (_data) {
@@ -31,6 +27,12 @@ function makeError(errorName, defaultMessage) {
 }
 
 Error.define = makeError;
+
+// other errors
 Error.define('Failure', 'An error was ocurred');
-Error.define('NotFoundError', 'Not Found');
 Error.define('UndefinedRoleError', 'Missing role');
+
+Error.define('BadRequest', 'Bad Request'); // 400
+Error.define('ServerError', 'Server Failure'); // 500
+Error.define('NotFoundError', 'Not Found'); // 404
+Error.define('NotImplemented', 'Not Implemented'); // 501

@@ -25,7 +25,7 @@ function getProp(key, from, value) {
   return obj;
 }
 
-/* global config, logger, Class, NotFoundError, UndefinedRoleError, Promise, Sc */
+/* global config, logger, Class, NotFoundError, NotImplemented, UndefinedRoleError, Promise, Sc */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -192,7 +192,7 @@ var Neonode = Class({}, 'Neonode')({
               controllerMethod = controllerInstance[params.action];
 
           if (params.route.action && !controllerMethod) {
-            return next(new NotFoundError('handler for `' + params.controller + '.' + params.action + '` is missing'));
+            return next(new NotImplemented('handler for `' + params.controller + '.' + params.action + '` is missing'));
           }
 
           // always merge some locals regardless of loaded middlewares
@@ -266,9 +266,9 @@ var Neonode = Class({}, 'Neonode')({
             });
           } catch (e) {
             if (!controllerMethod) {
-              _next = new Error('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`');
+              _next = new NotImplemented('expecting method for ' + params.controller + '.' + params.action + ', given `' + controllerMethod + '`');
             } else {
-              _next = new NotFoundError('handler for `' + params.controller + '.' + params.action + '` cannot be executed', e);
+              _next = e;
             }
           }
 
@@ -336,7 +336,8 @@ var Neonode = Class({}, 'Neonode')({
       var fixedErrors = {
         NotImplemented: 501,
         ForbiddenError: 403,
-        NotFoundError: 404
+        NotFoundError: 404,
+        ServerError: 500
       };
 
       // built-in error handling
