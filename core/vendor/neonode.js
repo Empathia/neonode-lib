@@ -25,7 +25,7 @@ function getProp(key, from, value) {
   return obj;
 }
 
-/* global config, logger, Class, NotFoundError, UndefinedRoleError */
+/* global config, logger, Class, NotFoundError, UndefinedRoleError, Promise, Sc */
 var Neonode = Class({}, 'Neonode')({
   prototype : {
     express           : null,
@@ -169,7 +169,6 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var _handlers = {};
-      var _isRepl = this._REPL;
 
       var fixedACL = this.acl;
       var findHandler = this.router.map(matchers);
@@ -314,7 +313,11 @@ var Neonode = Class({}, 'Neonode')({
 
       // default middleware for Express
       if (fixedMiddlewares.http) {
-        this.app.use(requireMiddlewares(['http'], fixedMiddlewares));
+        var _appMiddleware = requireMiddlewares(['http'], fixedMiddlewares);
+
+        if (_appMiddleware.length) {
+          this.app.use(_appMiddleware);
+        }
       }
 
       // IoC for route-mappings and controllers
@@ -337,7 +340,7 @@ var Neonode = Class({}, 'Neonode')({
       };
 
       // built-in error handling
-      this.app.use(function(err, req, res, next) {
+      this.app.use(function(err, req, res) {
         var status = fixedErrors[err.name] || 500;
         var type = status.toString().charAt() === '5' ? 'error' : 'warn';
 
