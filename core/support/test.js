@@ -62,7 +62,7 @@ function model(Model, defs) {
 
       if (!(params.except || params.only)) {
         Object.keys(defs).forEach(function (key) {
-          data[key] = params[key] || data[key];
+          data[key] = typeof params[key] !== 'undefined' ? params[key] : data[key];
         });
       }
     }
@@ -70,7 +70,7 @@ function model(Model, defs) {
     function replace(value) {
       if (typeof value === 'string') {
         return value.replace(/\{(.+?)\}/g, function ($0, key) {
-          return params[key] || data[key] || key;
+          return typeof params[key] !== 'undefined' ? params[key] : data[key];
         });
       }
 
@@ -88,44 +88,48 @@ function model(Model, defs) {
     return data;
   }
 
-  function instance(params) {
-    return new Model(_props(params));
+  function enhance(model) {
+    // wrap save() method for ease of use
+    model.ok = function () {
+      return model.save()
+        .catch(function (e) {
+          var _msg = [];
+
+          if (e.errors) {
+            Object.keys(e.errors)
+              .forEach(function (_key) {
+                _msg.push(e.errors[_key].message + ' (' + _key + ')');
+              });
+          } else {
+            _msg.push(e.message);
+          }
+
+          throw new Error(_msg.join('; '));
+        });
+    };
+
+    // assertion helpers
+    model.err = function (length) {
+      return model.save()
+        .then(function () {
+          expect.fail('should have rejected');
+        })
+        .catch(function (error) {
+          expect(error.message).to.equal((length || 1) + ' invalid values');
+        });
+    };
+
+    return model;
   }
 
-  var _instance = new Model(defs);
+  function factory(params) {
+    return enhance(new Model(_props(params)));
+  }
 
-  // overload save() method for ease of use
-  _instance.done = function () {
-    return _instance.save()
-      .catch(function (e) {
-        var _msg = [];
-
-        if (e.errors) {
-          Object.keys(e.errors)
-            .forEach(function (_key) {
-              _msg.push(e.errors[_key].message + ' (' + _key + ')');
-            });
-        } else {
-          _msg.push(e.message);
-        }
-
-        throw new Error(_msg.join('; '));
-      });
-  };
-
-  // assertion helpers
-  _instance.fail = function (length) {
-    return _instance.save()
-      .then(function () {
-        expect.fail('should have rejected');
-      })
-      .catch(function (error) {
-        expect(error.message).to.equal((length || 1) + ' invalid values');
-      });
-  };
+  var _instance = enhance(new Model(defs));
 
   // new instances with defaults
-  _instance.new = instance;
+  _instance.new = factory;
 
   return _instance;
 }
