@@ -8,7 +8,7 @@ var expect = require('chai').expect;
 var Bluebird = require('bluebird');
 
 global.sa = sa;
-global.model = model;
+global.mock = mock;
 global.fetch = fetch;
 global.expect = expect;
 global.Promise = Bluebird;
@@ -42,7 +42,7 @@ Neonode._initialize(function () {
 });
 
 // krypton-orm
-function model(Model, defs) {
+function mock(Model, defs) {
   function _props(params) {
     params = params || {};
 
