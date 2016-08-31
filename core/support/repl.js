@@ -1,5 +1,4 @@
 var OS = require('os');
-var path = require('path');
 var REPL = require('repl');
 var Module = require('module');
 
@@ -45,7 +44,7 @@ function _reload() {
   }
 }
 
-var _watcher = enableWatch && chokidar
+enableWatch && chokidar
   .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
   .on('all', function() {
     clearTimeout(_reload.t);

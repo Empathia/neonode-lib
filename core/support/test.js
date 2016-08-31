@@ -36,7 +36,6 @@ Neonode._initialize(function () {
 
     process.exit();
   });
-
 });
 
 // krypton-orm
