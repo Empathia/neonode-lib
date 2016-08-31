@@ -43,6 +43,10 @@ Neonode._initialize(function () {
 
 // krypton-orm
 function mock(Model, defs) {
+  if (typeof Model.prototype.new === 'function') {
+    throw new Error(Model.name + ' model is already mocked, use `Model.new()` or `model.new()` instead');
+  }
+
   function _props(params) {
     params = params || {};
 
@@ -91,50 +95,43 @@ function mock(Model, defs) {
     return data;
   }
 
-  function enhance(model) {
-    // wrap save() method for ease of use
-    model.ok = function () {
-      return model.save()
-        .catch(function (e) {
-          var _msg = [];
-
-          if (e.errors) {
-            Object.keys(e.errors)
-              .forEach(function (_key) {
-                _msg.push(e.errors[_key].message + ' (' + _key + ')');
-              });
-          } else {
-            _msg.push(e.message);
-          }
-
-          throw new Error(_msg.join('; '));
-        });
-    };
-
-    // assertion helpers
-    model.err = function (length) {
-      return model.save()
-        .then(function () {
-          expect.fail('should have rejected');
-        })
-        .catch(function (error) {
-          expect(error.message).to.equal((length || 1) + ' invalid values');
-        });
-    };
-
-    return model;
-  }
-
   function factory(params) {
-    return enhance(new Model(_props(params)));
+    return new Model(_props(params));
   }
-
-  var _instance = enhance(new Model(defs));
 
   // new instances with defaults
-  _instance.new = factory;
+  Model.new = Model.prototype.new = factory;
 
-  return _instance;
+  // assertion helpers
+  Model.prototype.ok = function () {
+    return this.save()
+      .catch(function (e) {
+        var _msg = [];
+
+        if (e.errors) {
+          Object.keys(e.errors)
+            .forEach(function (_key) {
+              _msg.push(e.errors[_key].message + ' (' + _key + ')');
+            });
+        } else {
+          _msg.push(e.message);
+        }
+
+        throw new Error(_msg.join('; '));
+      });
+  };
+
+  Model.prototype.err = function (length) {
+    return this.save()
+      .then(function () {
+        expect.fail('should have rejected');
+      })
+      .catch(function (error) {
+        expect(error.message).to.equal((length || 1) + ' invalid values');
+      });
+  };
+
+  return new Model(defs);
 }
 
 // common helper
