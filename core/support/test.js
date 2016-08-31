@@ -14,12 +14,15 @@ global.expect = expect;
 global.Promise = Bluebird;
 
 Neonode._initialize(function () {
-  var mocha = new Mocha();
-
-  mocha.reporter('spec');
-
   // load all tests and filter out
   var filter = process.argv.slice(2)[0] || '.js';
+  var expr = process.argv.slice(3)[0] || '';
+
+  var mocha = new Mocha({
+    fgrep: expr || undefined
+  });
+
+  mocha.reporter('spec');
 
   Neonode._util.glob('test/**/*.js')
     .forEach(function (file) {
