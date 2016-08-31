@@ -8,6 +8,7 @@ var expect = require('chai').expect;
 var Bluebird = require('bluebird');
 
 global.sa = sa;
+global.model = model;
 global.fetch = fetch;
 global.expect = expect;
 global.Promise = Bluebird;
@@ -37,6 +38,98 @@ Neonode._initialize(function () {
   });
 
 });
+
+// krypton-orm
+function model(Model, defs) {
+  function _props(params) {
+    params = params || {};
+
+    var data = {};
+
+    if (defs) {
+      Object.keys(defs).forEach(function (key) {
+        if (params.except || params.only) {
+          if (params.except && params.except.indexOf(key) === -1) {
+            data[key] = defs[key];
+          }
+
+          if (params.only && params.only.indexOf(key) > -1) {
+            data[key] = defs[key];
+          }
+        } else {
+          data[key] = defs[key];
+        }
+      });
+
+      if (!(params.except || params.only)) {
+        Object.keys(defs).forEach(function (key) {
+          data[key] = params[key] || data[key];
+        });
+      }
+    }
+
+    function replace(value) {
+      if (typeof value === 'string') {
+        return value.replace(/\{(.+?)\}/g, function ($0, key) {
+          return params[key] || data[key] || key;
+        });
+      }
+
+      return value;
+    }
+
+    Object.keys(data).forEach(function (key) {
+      if (Array.isArray(data[key])) {
+        data[key] = data[key].map(replace);
+      } else {
+        data[key] = replace(data[key]);
+      }
+    });
+
+    return data;
+  }
+
+  function instance(params) {
+    return new Model(_props(params));
+  }
+
+  var _instance = new Model(defs);
+
+  // overload save() method for ease of use
+  _instance.done = function () {
+    return _instance.save()
+      .catch(function (e) {
+        var _msg = [];
+
+        if (e.errors) {
+          Object.keys(e.errors)
+            .forEach(function (_key) {
+              _msg.push(e.errors[_key].message + ' (' + _key + ')');
+            });
+        } else {
+          _msg.push(e.message);
+        }
+
+        throw new Error(_msg.join('; '));
+      });
+  };
+
+  // assertion helpers
+  _instance.fail = function (length) {
+    return _instance.save()
+      .then(function () {
+        expect.fail('should have rejected');
+      })
+      .catch(function (error) {
+        expect(error.message).to.equal((length || 1) + ' invalid values');
+      });
+  };
+
+  // new instances with defaults
+  _instance.new = instance;
+
+  return _instance;
+}
 
 // common helper
 function fetch(resource) {
