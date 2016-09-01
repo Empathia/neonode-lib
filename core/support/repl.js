@@ -9,7 +9,7 @@ var chokidar = require('chokidar');
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
 
-/* global config, Neonode */
+/* global config, urlFor, Neonode */
 if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
