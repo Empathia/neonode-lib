@@ -9,7 +9,7 @@ var chokidar = require('chokidar');
 var _empty = '(' + OS.EOL + ')';
 var exit = process.exit.bind(process);
 
-/* global Neonode */
+/* global config, Neonode */
 if (!Neonode) {
   throw new Error('missing Neonode instance');
 }
@@ -35,9 +35,19 @@ function _reload() {
     Neonode._serverStop();
   }
 
+  Object.keys(Module._cache)
+    .forEach(function(key) {
+      if (key.indexOf('node_modules') === -1) {
+        delete Module._cache[key];
+      }
+    });
+
+  // some cleanup
+  global.Sc.ACL.roles = {};
+  global.Sc.ACL.resources = {};
+
   // intentionally re-required
-  Neonode = require('../../core');
-  Neonode._REPL = true;
+  global.Neonode = Neonode = require('../../core');
 
   if (enableServer) {
     Neonode._serverStart();
@@ -48,10 +58,7 @@ enableWatch && chokidar
   .watch('{lib,config,models,controllers,migrations,middlewares}/**/*.{js,json}', { ignoreInitial: true })
   .on('all', function() {
     clearTimeout(_reload.t);
-    _reload.t = setTimeout(function () {
-      Module._cache = {};
-      _reload();
-    }, 200);
+    _reload.t = setTimeout(_reload, 200);
   });
 
 var repl = REPL.start({
@@ -174,7 +181,6 @@ repl.defineCommand('routes', {
 repl.defineCommand('reload', {
   help: 'Reload modules from the current Neonode instance',
   action: function() {
-    Module._cache = {};
     _reload();
   }
 });
