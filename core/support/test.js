@@ -106,18 +106,11 @@ function mock(Model, defs) {
   Model.prototype.ok = function () {
     return this.save()
       .catch(function (e) {
-        var _msg = [];
-
         if (e.errors) {
-          Object.keys(e.errors)
-            .forEach(function (_key) {
-              _msg.push(e.errors[_key].message + ' (' + _key + ')');
-            });
+          expect.fail(e.toString());
         } else {
-          _msg.push(e.message);
+          expect.fail(e);
         }
-
-        throw new Error(_msg.join('; '));
       });
   };
 
@@ -127,7 +120,31 @@ function mock(Model, defs) {
         expect.fail('should have rejected');
       })
       .catch(function (error) {
-        expect(error.message).to.equal((length || 1) + ' invalid values');
+        if (length !== null && typeof length === 'object') {
+          Object.keys(length).forEach(function (key) {
+            if (!error.errors[key]) {
+              expect.fail('missing error message for ' + key);
+            } else {
+              expect(error.errors[key].message).to[
+                length[key] instanceof RegExp ? 'match' : 'contain'
+              ](length[key]);
+            }
+          });
+        }
+
+        var _message = error.message + '\n' + error.toString();
+
+        if (!length || typeof length === 'number') {
+          expect(_message).to.equal((length || 1) + ' invalid values');
+        }
+
+        if (typeof length === 'string') {
+          expect(_message).to.contain(length);
+        }
+
+        if (length instanceof RegExp) {
+          expect(_message).to.match(length);
+        }
       });
   };
 
