@@ -107,9 +107,9 @@ function mock(Model, defs) {
     return this.save()
       .catch(function (e) {
         if (e.errors) {
-          expect.fail(e.toString());
+          throw new Error(e.toString());
         } else {
-          expect.fail(e);
+          throw e;
         }
       });
   };
@@ -117,13 +117,13 @@ function mock(Model, defs) {
   Model.prototype.err = function (length) {
     return this.save()
       .then(function () {
-        expect.fail('should have rejected');
+        throw new Error('should have rejected');
       })
       .catch(function (error) {
         if (length !== null && typeof length === 'object') {
           Object.keys(length).forEach(function (key) {
             if (!error.errors[key]) {
-              expect.fail('missing error message for ' + key);
+              throw new Error('missing error message for ' + key);
             } else {
               expect(error.errors[key].message).to[
                 length[key] instanceof RegExp ? 'match' : 'contain'
