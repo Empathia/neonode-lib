@@ -1,9 +1,8 @@
-/* globals config, Neonode */
+/* globals config */
 
 require('..');
 
 var sa = require('superagent');
-var Mocha = require('mocha');
 var expect = require('chai').expect;
 var Bluebird = require('bluebird');
 
@@ -13,40 +12,8 @@ global.fetch = fetch;
 global.expect = expect;
 global.Promise = Bluebird;
 
-Neonode._initialize(function () {
-  // load all tests and filter out
-  var filter = process.argv.slice(2)[0] || '.js';
-  var expr = process.argv.slice(3)[0] || '';
-
-  var mocha = new Mocha({
-    fgrep: expr || undefined
-  });
-
-  mocha.reporter('spec');
-
-  Neonode._util.glob('test/**/*.js')
-    .forEach(function (file) {
-      if (file.toLowerCase().indexOf(filter) > -1) {
-        mocha.addFile(file);
-      }
-    });
-
-  // run Mocha
-  mocha.run(function (failures) {
-    process.on('exit', function () {
-      process.exit(failures);
-    });
-
-    process.exit();
-  });
-});
-
 // krypton-orm
-function mock(Model, defs) {
-  if (typeof Model.prototype.new === 'function') {
-    throw new Error(Model.name + ' model is already mocked, use `Model.new()` or `model.new()` instead');
-  }
-
+function _new(Model, defs) {
   function _props(params) {
     params = params || {};
 
@@ -95,12 +62,10 @@ function mock(Model, defs) {
     return data;
   }
 
-  function factory(params) {
-    return new Model(_props(params));
-  }
-
   // new instances with defaults
-  Model.new = Model.prototype.new = factory;
+  Model.new = Model.prototype.new = function (params) {
+    return new Model(_props(params));
+  };
 
   // assertion helpers
   Model.prototype.ok = function () {
@@ -156,6 +121,12 @@ function mock(Model, defs) {
   };
 
   return new Model(defs);
+}
+
+function mock(Model, defs) {
+  return typeof Model.new !== 'function'
+    ? _new(Model, defs)
+    : Model.new(defs);
 }
 
 // common helper
