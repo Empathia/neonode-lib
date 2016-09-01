@@ -29,7 +29,8 @@ var logger;
 function config(key, value) {
   var parts = key.split('.');
   var prop = parts.shift();
-  var obj = (SETTINGS[SETTINGS.environment] || {})[prop] || (SETTINGS[prop]) || null;
+  var obj = (SETTINGS[SETTINGS.environment] || {})[prop]
+    || ((SETTINGS[prop] || {})[SETTINGS.environment] || SETTINGS[prop]) || null;
 
   try {
     while (parts.length) {
@@ -107,13 +108,10 @@ Neonode._drawRoutes(require(util.filepath('config/routeMappings.js')));
 // shortcut helpers
 global.urlFor = Neonode._fixedMappings;
 
-// database access
-var db = config('database');
+// Bind a knex instance to all Krypton Models
+global.knex = require('knex')(config('database'));
 
-if (!(!db || db.disabled)) {
-  // Bind a knex instance to all Krypton Models
-  Krypton.Model.knex(require('knex')(db));
-}
+Krypton.Model.knex(global.knex);
 
 // errors
 require('./support/errors');
