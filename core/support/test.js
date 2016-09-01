@@ -132,7 +132,7 @@ function mock(Model, defs) {
           });
         }
 
-        var _message = error.message + '\n' + error.toString();
+        var _message = error.message + '; ' + error.toString();
 
         if (!length || typeof length === 'number') {
           expect(_message).to.equal((length || 1) + ' invalid values');
