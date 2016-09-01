@@ -130,20 +130,27 @@ function mock(Model, defs) {
               ](length[key]);
             }
           });
-        }
+        } else {
+          var _message = [error.message].concat(
+              error.errors
+                ? Object.keys(error.errors)
+                  .map(function (e) {
+                    return e + ': ' + error.errors[e].message;
+                  })
+                : error.toString().split('\n')
+            ).join('; ');
 
-        var _message = error.message + '; ' + error.toString();
+          if (!length || typeof length === 'number') {
+            expect(_message).to.equal((length || 1) + ' invalid values');
+          }
 
-        if (!length || typeof length === 'number') {
-          expect(_message).to.equal((length || 1) + ' invalid values');
-        }
+          if (typeof length === 'string') {
+            expect(_message).to.contain(length);
+          }
 
-        if (typeof length === 'string') {
-          expect(_message).to.contain(length);
-        }
-
-        if (length instanceof RegExp) {
-          expect(_message).to.match(length);
+          if (length instanceof RegExp) {
+            expect(_message).to.match(length);
+          }
         }
       });
   };
