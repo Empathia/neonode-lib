@@ -141,7 +141,7 @@ function mock(Model, defs) {
             ).join('; ');
 
           if (!length || typeof length === 'number') {
-            expect(_message).to.equal((length || 1) + ' invalid values');
+            expect(_message).to.contain((length || 1) + ' invalid values');
           }
 
           if (typeof length === 'string') {
