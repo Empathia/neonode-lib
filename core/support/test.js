@@ -1,16 +1,12 @@
-/* globals config */
-
-require('..');
+/* globals config, Promise */
 
 var sa = require('superagent');
 var expect = require('chai').expect;
-var Bluebird = require('bluebird');
 
 global.sa = sa;
 global.mock = mock;
 global.fetch = fetch;
 global.expect = expect;
-global.Promise = Bluebird;
 
 // krypton-orm
 function _new(Model, defs) {
@@ -141,7 +137,7 @@ function fetch(resource) {
 
   function load() {
     if (!_promise) {
-      _promise = new Bluebird(function (resolve) {
+      _promise = new Promise(function (resolve) {
         var req = sa.agent()[resource.verb](url)
           .set('Accept', 'text/html')
           .type('form');
