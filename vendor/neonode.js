@@ -52,7 +52,7 @@ var Neonode = Class({}, 'Neonode')({
         }
       });
 
-      this._util = require('../../')(cwd);
+      this._util = require('..')(cwd);
 
       return this;
     },
@@ -406,8 +406,8 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _loadControllers : function(){
-      require('../controllers/BaseController');
-      require('../controllers/RestfulController');
+      require('../core/controllers/BaseController');
+      require('../core/controllers/RestfulController');
 
       this._loadFiles('controllers/**/*.js', 'Loading Controllers...', function(file) {
         var fixedFile = this._util.relative(file);
@@ -480,7 +480,7 @@ var Neonode = Class({}, 'Neonode')({
     _setupMiddlewares : function(){
       logger.info(clc.bold('Loading Middlewares...'));
 
-      this._middlewares = this._require('../middlewares');
+      this._middlewares = this._require('../core/middlewares');
 
       this._util.glob('middlewares/**/*.js').forEach(function (file) {
         // override middlewares
@@ -544,7 +544,7 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _loadMailers: function() {
-      require('../mailers/BaseMailer');
+      require('../core/mailers/BaseMailer');
       return this._loadFiles('lib/mailers/**/*.js', 'Loading mailers...');
     },
   }

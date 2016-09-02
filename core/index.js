@@ -1,7 +1,7 @@
 // all files are derived from here
 var cwd = process.cwd();
 
-var util = require('../')(cwd);
+var util = require('..')(cwd);
 
 var exit = process.exit.bind(process);
 
@@ -51,8 +51,8 @@ require('neon/stdlib');
 //                        Error monitoring for neon
 // *************************************************************************
 if (hasREPL || process.argv.indexOf('--debug') > -1) {
-  require('./vendor/lithium');
-  require('./support/lithium');
+  require('../vendor/lithium');
+  require('../support/lithium');
 }
 
 // ACL core
@@ -68,10 +68,10 @@ require('thulium');
 global.config = config;
 
 // logger interface
-logger = global.logger = require('./support/logger');
+logger = global.logger = require('../support/logger');
 
 // standard interfaces
-Neonode = global.Neonode = module.exports = require('./vendor/neonode')(cwd);
+Neonode = global.Neonode = module.exports = require('../vendor/neonode')(cwd);
 
 // bootstrap
 try {
@@ -114,7 +114,7 @@ global.knex = require('knex')(config('database'));
 Krypton.Model.knex(global.knex);
 
 // errors
-require('./support/errors');
+require('../support/errors');
 
 // redefine
 logger();
