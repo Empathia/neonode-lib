@@ -1,2 +1,3 @@
 // legacy
-// require('../../support/test');
+require('..');
+require('../../support/test');
