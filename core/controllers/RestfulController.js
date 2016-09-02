@@ -68,7 +68,11 @@ module.exports = Class('RestfulController').inherits(BaseController)({
       var _resources = [];
 
       this.constructor.resources.forEach(function (res) {
-        Array.prototype.push.apply(_resources, res.items || [res]);
+        Array.prototype.push.apply(_resources, res.resources || res.items.map(function(item) {
+          return typeof item === 'string' ? item : item.resource;
+        }).filter(function(item) {
+          return item;
+        }));
       });
 
       if (_resources.indexOf(resourceName) === -1) {
