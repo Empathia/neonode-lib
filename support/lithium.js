@@ -33,7 +33,7 @@ Li.Engine.error.push(function errorEngine(data) {
     if (typeof data.args[2] === 'function' && data.args[2].length === 1) {
       data.args[2](data.error.stack || data.error);
     } else {
-      console.log(data);
+      logger.error(data.error.stack || data.error);
     }
   } catch (e) {
     logger.error(data.error.stack || data.error);
