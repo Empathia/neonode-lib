@@ -47,7 +47,7 @@ function _reload() {
   global.Sc.ACL.resources = {};
 
   // intentionally re-required
-  global.Neonode = Neonode = require('../../core');
+  global.Neonode = Neonode = require('../core');
 
   if (enableServer) {
     Neonode._serverStart();
