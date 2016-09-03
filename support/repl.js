@@ -145,9 +145,9 @@ repl.defineCommand('fetch', {
         process.stderr.write(clc.red(err.message || err.toString()) + '\n');
       } else {
         Object.keys(res).forEach(function (key) {
-          var value = typeof res[key] === 'object' ? JSON.stringify(res[key], null, 2) : res[key];
+          var _value = typeof res[key] === 'object' ? JSON.stringify(res[key], null, 2) : res[key];
 
-          process.stdout.write(clc.cyan(key) + ': ' + value.toString().split('\n').join('\n' + (new Array(key.length + 3)).join(' ')) + '\n');
+          process.stdout.write(clc.cyan(key) + ': ' + _value.toString().split('\n').join('\n' + (new Array(key.length + 3)).join(' ')) + '\n');
         });
       }
     });
