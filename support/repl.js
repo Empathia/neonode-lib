@@ -71,14 +71,30 @@ var repl = REPL.start({
     }
 
     try {
-      callback(null, eval(cmd));
+      var value = eval(cmd);
+
+      if (typeof value == 'undefined') {
+        return callback();
+      }
+
+      if (typeof value.then === 'function') {
+        return value
+          .then(function (result) {
+            callback(null, result);
+          })
+          .catch(function (error) {
+            callback(error);
+          });
+      }
+
+      callback(null, value);
     } catch (e) {
       callback(e);
     }
   }
 })
 .on('exit', function() {
-  console.log('bye bye!');
+  process.stdout.write('\rbye bye!\n');
   exit();
 });
 
