@@ -280,10 +280,10 @@ var Neonode = Class({}, 'Neonode')({
                 errors: error.errors ? error.errors : [error.message || error.toString()]
               };
 
-              if (!_url) {
+              if (!req.redirectUrl) {
                 next(error);
               } else {
-                res.redirect(_url);
+                res.redirect(req.redirectUrl);
               }
             });
         }
