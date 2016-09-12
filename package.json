@@ -20,6 +20,7 @@
     "krypton-orm": "git://github.com/sgarza/krypton.git#dev",
     "method-override": "2.3.6",
     "mkdirp": "0.5.1",
+    "moment": "^2.15.0",
     "morgan": "1.7.0",
     "mysql": "2.11.1",
     "neon": "2.0.0",

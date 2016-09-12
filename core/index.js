@@ -113,6 +113,9 @@ global.knex = require('knex')(config('database'));
 
 Krypton.Model.knex(global.knex);
 
+// moment.js
+global.moment = require('moment');
+
 // errors
 require('../support/errors');
 
