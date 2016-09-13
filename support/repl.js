@@ -43,6 +43,7 @@ function _reload() {
     });
 
   // some cleanup
+  global.knex.destroy();
   global.Sc.ACL.roles = {};
   global.Sc.ACL.resources = {};
 
