@@ -168,7 +168,7 @@ var Neonode = Class({}, 'Neonode')({
         });
       }, this);
 
-      var _isDev = config('environment') === 'development';
+      var _isDebug = config('environment') === 'development' || config('debug');
       var _handlers = {};
       var fixedACL = this.acl;
       var findHandler = this.router.map(matchers);
@@ -281,7 +281,7 @@ var Neonode = Class({}, 'Neonode')({
               req.session._failure = {
                 old: req.body,
                 label: error.errors ? error.label || error.message : error.label || error.name,
-                errors: error.errors ? error.errors : [(_isDev ? error.stack : null) || error.message || error.toString()]
+                errors: error.errors ? error.errors : [(_isDebug ? error.stack : null) || error.message || error.toString()]
               };
 
               if (!req.redirectUrl) {
