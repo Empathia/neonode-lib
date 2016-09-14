@@ -213,6 +213,10 @@ var Neonode = Class({}, 'Neonode')({
             delete req.body._url;
           }
 
+          if (!req.session) {
+            throw new Error('Sessions are required');
+          }
+
           var _failure = req.session._failure || {};
           var _old = _failure.old || {};
           var _err;
