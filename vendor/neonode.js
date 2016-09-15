@@ -233,9 +233,13 @@ var Neonode = Class({}, 'Neonode')({
           }
 
           function _fix(error) {
+            if (!_isDebug || !error.stack) {
+              return [error.message || error.toString()];
+            }
+
             return {
               stack: error.stack || null,
-              message: error.message || null
+              message: error.message || error.toString() || null
             };
           }
 
@@ -288,7 +292,7 @@ var Neonode = Class({}, 'Neonode')({
               req.session._failure = {
                 old: req.body,
                 label: error.errors ? error.label || error.message : error.label || error.name,
-                errors: error.errors ? error.errors : [(_isDebug ? _fix(error) : null) || error.message || error.toString()]
+                errors: error.errors ? error.errors : _fix(error)
               };
 
               if (!req.redirectUrl) {
