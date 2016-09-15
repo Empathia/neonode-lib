@@ -237,10 +237,10 @@ var Neonode = Class({}, 'Neonode')({
               return [error.message || error.toString()];
             }
 
-            return {
+            return [{
               stack: error.stack || null,
               message: error.message || error.toString() || null
-            };
+            }];
           }
 
           if (_failure.errors) {
