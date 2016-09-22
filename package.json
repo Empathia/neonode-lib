@@ -18,6 +18,7 @@
     "glob": "7.0.3",
     "knex": "0.11.10",
     "krypton-orm": "git://github.com/sgarza/krypton.git#dev",
+    "lodash": "^4.16.1",
     "method-override": "2.3.6",
     "mkdirp": "0.5.1",
     "moment": "^2.15.0",

@@ -116,6 +116,9 @@ Krypton.Model.knex(global.knex);
 // moment.js
 global.moment = require('moment');
 
+// lo-dash
+global._ = require('lodash');
+
 // errors
 require('../support/errors');
 
