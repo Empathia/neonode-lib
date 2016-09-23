@@ -202,6 +202,9 @@ var Neonode = Class({}, 'Neonode')({
             res.locals.layout = false;
             req.isXMLHttpRequest = true;
             res.locals.isXMLHttpRequest = true;
+          } else {
+            req.session._refererUrl = req.headers.referer;
+            req.session._previousUrl = req.url;
           }
 
           var _url;
