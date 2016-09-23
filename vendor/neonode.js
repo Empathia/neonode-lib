@@ -295,6 +295,11 @@ var Neonode = Class({}, 'Neonode')({
                 errors: error.errors ? error.errors : _fix(error)
               };
 
+              if (req.session._back) {
+                req.redirectUrl = req.session._back;
+                delete req.session._back;
+              }
+
               if (!req.redirectUrl) {
                 next(error);
               } else {
