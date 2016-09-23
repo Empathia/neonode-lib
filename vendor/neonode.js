@@ -202,7 +202,13 @@ var Neonode = Class({}, 'Neonode')({
             res.locals.layout = false;
             req.isXMLHttpRequest = true;
             res.locals.isXMLHttpRequest = true;
-          } else {
+          }
+
+          if (!req.session) {
+            throw new Error('Sessions are required');
+          }
+
+          if (!req.isXMLHttpRequest && req.method === 'GET') {
             req.session._refererUrl = req.headers.referer;
             req.session._previousUrl = req.url;
           }
@@ -216,8 +222,9 @@ var Neonode = Class({}, 'Neonode')({
             delete req.body._url;
           }
 
-          if (!req.session) {
-            throw new Error('Sessions are required');
+          if (!req.isXMLHttpRequest && req.session._back) {
+            _url = req.session._back;
+            delete req.session._back;
           }
 
           var _failure = req.session._failure || {};
@@ -297,11 +304,6 @@ var Neonode = Class({}, 'Neonode')({
                 label: error.errors ? error.label || error.message : error.label || error.name,
                 errors: error.errors ? error.errors : _fix(error)
               };
-
-              if (req.session._back) {
-                req.redirectUrl = req.session._back;
-                delete req.session._back;
-              }
 
               if (!req.redirectUrl) {
                 next(error);
