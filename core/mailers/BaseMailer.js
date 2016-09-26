@@ -1,116 +1,97 @@
+/* globals Class */
+
 var fs = require('fs');
 var path = require('path');
+var pug = require('pug');
+var _ = require('lodash');
 
-module.exports = Class('BaseMailer')({
+var BaseMailer = Class('BaseMailer')({
   _transport: null,
   _options: null,
   _templates: null,
-  _renderer: {
-    renderFile: function (file, vars) {
-      // default renderer is thulium
-      var partial = new Thulium({
-        template : fs.readFileSync(file).toString()
-      });
 
-      partial.parseSync().renderSync(vars || {});
-
-      return partial.view;
-    }
-  },
-  _extension: '.html',
-
-  transport: function (transport) {
+  transport: function(transport) {
     if (transport) {
       this._transport = transport;
 
       return transport;
     }
 
-    var _klass = this;
-    var _transport;
+    var klass = this;
 
-    do {
-      _transport = _klass._transport || _klass.prototype._transport || _klass.prototype.constructor._transport;
-    } while (_klass && _klass !== this && !_transport)
+    while (klass && !klass._transport) {
+      var proto = Object.getPrototypeOf(klass.prototype);
+      klass = proto && proto.constructor;
+    }
 
-    return _transport;
+    if (klass && klass._transport) {
+      return klass && klass._transport;
+    }
+
+    throw new Error(this.className + ' can\'t find a nodemailer transport');
   },
 
-  setMethodTemplate: function (methodName, templateName) {
+  setMethodTemplate: function(methodName, templateName) {
     if (!this._templates) {
       this._templates = {};
     }
 
     this._templates[methodName] = {
       template: path.join(
-        Neonode.cwd,
+        process.cwd(),
         'views',
         'mailers',
-        this.className,
-        templateName + this._extension
+        `${this.className}`,
+        `${templateName}.pug`
       ),
     };
 
     return this;
   },
 
-  setRendererEngine: function (engine, extName) {
-    this._renderer = engine;
-
-    if (extName) {
-      this._extension = (extName.indexOf('.') > -1 ? '' : '.') + extName;
-    }
-
-    return this;
-  },
-
-  _send: function (methodName, recipients, localVars) {
-    recipients = recipients || [];
-    localVars = localVars || {};
-
-    var defaultOptions = this._options || {};
-    var localOptions = localVars.options || {};
-    var options = {};
+  _send: function(methodName) {
+    var args = Array.prototype.slice.call(arguments, 1);
     var template;
 
-    Object.keys(defaultOptions).forEach(function (key) {
-      options[key] = typeof localOptions[key] === 'undefined' ? defaultOptions[key] : localOptions[key];
-    });
+    var defaultOptions = this._options;
+
+    var recipients = args[0];
+    var localVars = args[1];
+
+    var options = _.assign(defaultOptions, localVars._options);
 
     if (this._templates && this._templates[methodName].template) {
       template = this._templates[methodName].template;
     }
 
     var conventionalTemplate = path.join(
-      Neonode.cwd,
+      process.cwd(),
       'views',
       'mailers',
       this.className,
-      methodName + this._extension
+      methodName + '.pug'
     );
 
-    var self = this;
+    try {
+      fs.accessSync(conventionalTemplate, fs.F_OK);
+      template = conventionalTemplate;
+    } catch (e) {
+      throw new Error('Method ' + methodName + ' in ' + this.className + ' doesn\'t have a template');
+    }
 
-    return new Promise(function (resolve) {
-      var _transport = self.transport();
+    let html;
 
-      if (!_transport) {
-        throw new Error((self.className || self.name || 'BaseMailer') + ' can\'t find a nodemailer transport');
-      }
+    try {
+      html = pug.renderFile(template, localVars);
+    } catch (e) {
+      throw new Error(e);
+    }
 
-      try {
-        fs.accessSync(conventionalTemplate, fs.F_OK);
-        template = conventionalTemplate;
-      } catch (e) {
-        throw new Error('Method ' + methodName + ' in ' + this.className + ' doesn\'t have a template');
-      }
+    options.html = html;
+    options.to = recipients;
 
-      var html = self._renderer.renderFile(template, localVars);
-
-      options.html = html;
-      options.to = recipients;
-
-      resolve(_transport.sendMail(options));
-    });
+    return this.transport().sendMail(options);
   },
 });
+
+module.exports = BaseMailer;
