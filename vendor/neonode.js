@@ -198,6 +198,13 @@ var Neonode = Class({}, 'Neonode')({
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
 
+          // disable cache
+          if (Controller.nocache || controllerInstance.nocache || controllerInstance.constructor.nocache) {
+            res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+            res.header('Expires', '-1');
+            res.header('Pragma', 'no-cache');
+          }
+
           if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
             res.locals.layout = false;
             req.isXMLHttpRequest = true;
