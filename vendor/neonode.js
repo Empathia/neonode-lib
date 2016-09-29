@@ -195,6 +195,9 @@ var Neonode = Class({}, 'Neonode')({
             return next(new NotImplemented('handler for `' + params.controller + '.' + params.action + '` is missing'));
           }
 
+          // attach router info
+          req.handler = params;
+
           // always merge some locals regardless of loaded middlewares
           res.locals.layout = res.locals.layout || Controller.layout || controllerInstance.layout || controllerInstance.constructor.layout;
 
