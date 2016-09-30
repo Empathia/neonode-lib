@@ -560,9 +560,15 @@ var Neonode = Class({}, 'Neonode')({
         var resources = {};
 
         // load resources
-        this._util.glob('lib/ACL/*/index.js').forEach(function (file) {
-          resources[this._util.basename(this._util.dirname(file))] = this._require(file);
-          logger.info('  ' + this._util.relative(file));
+        this._util.glob('lib/ACL/**/index.js').forEach(function (file) {
+          var _basename = this._util.relative(file)
+            .replace(/^lib\/ACL\/|\/?index\.js$/g, '')
+            .replace(/\//g, '.');
+
+          if (_basename) {
+            logger.info('  ' + this._util.relative(file));
+            resources[_basename] = this._require(file);
+          }
         }, this);
 
         var fixedResources = _acl.buildResources(resources);
