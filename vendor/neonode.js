@@ -325,21 +325,20 @@ var Neonode = Class({}, 'Neonode')({
 
         var fixedPipeline = requireMiddlewares(params.route.middleware || [], fixedMiddlewares, params.route.skip);
 
-        // TODO: route-mappings should provide this detail!
-        var resourceName = params.route.handler[params.route.handler.length - 1] || params.route.controller;
-
         // append built middleware for this resource
-        if (resourceName && fixedACL.resources && fixedACL.resources[resourceName]) {
+        if (fixedACL.resources && fixedACL.resources[params.route._resourceName]) {
           fixedPipeline.push(function (req, res, next) {
             // health-check
             if (typeof req.role === 'undefined') {
-              next(new UndefinedRoleError('missing `req.role` when accessing `' + resourceName + '` resource'));
+              next(new UndefinedRoleError('missing `req.role` when accessing `' + params.route._resourceName + '` resource'));
             } else {
               next();
             }
           });
 
-          fixedPipeline.push(fixedACL.middlewares[resourceName]);
+          fixedACL.middlewares[params.route._resourceName].forEach(function(_middleware) {
+            fixedPipeline.push(_middleware);
+          });
         }
 
         // prepend custom middlewares per route
