@@ -336,9 +336,13 @@ var Neonode = Class({}, 'Neonode')({
             }
           });
 
-          fixedACL.middlewares[params.route._resourceName].forEach(function(_middleware) {
-            fixedPipeline.push(_middleware);
-          });
+          var _acl = fixedACL.middlewares[params.route._resourceName][params.route._actionName];
+
+          if (_acl) {
+            _acl.forEach(function(_middleware) {
+              fixedPipeline.push(_middleware);
+            });
+          }
         }
 
         // prepend custom middlewares per route

@@ -128,8 +128,11 @@ function buildMiddlewares(resources) {
       });
 
       // finally, we can create our middleware per-resource and actions
-      fixedMiddleware[resourceName] = fixedRole.actions.map(function (actionName) {
-        return Sc.ACL.can(actionName, resourceName);
+      fixedMiddleware[resourceName] = fixedMiddleware[resourceName] || {};
+
+      fixedRole.actions.forEach(function (actionName) {
+        fixedMiddleware[resourceName][actionName] = fixedMiddleware[resourceName][actionName] || [];
+        fixedMiddleware[resourceName][actionName].push(Sc.ACL.can(actionName, resourceName));
       });
     });
   });
