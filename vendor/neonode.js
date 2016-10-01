@@ -254,12 +254,12 @@ var Neonode = Class({}, 'Neonode')({
 
           function _fix(error) {
             if (!_isDebug || !error.stack) {
-              return [error.message || error.toString()];
+              return [error instanceof Error ? error.message || error.toString() : error];
             }
 
             return [{
               stack: error.stack || null,
-              message: error.message || error.toString() || null
+              message: error instanceof Error ? error.message || error.toString() : error
             }];
           }
 
@@ -339,9 +339,7 @@ var Neonode = Class({}, 'Neonode')({
           var _acl = fixedACL.middlewares[params.route._resourceName][params.route._actionName];
 
           if (_acl) {
-            _acl.forEach(function(_middleware) {
-              fixedPipeline.push(_middleware);
-            });
+            fixedPipeline.push(_acl);
           }
         }
 

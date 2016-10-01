@@ -131,8 +131,7 @@ function buildMiddlewares(resources) {
       fixedMiddleware[resourceName] = fixedMiddleware[resourceName] || {};
 
       fixedRole.actions.forEach(function (actionName) {
-        fixedMiddleware[resourceName][actionName] = fixedMiddleware[resourceName][actionName] || [];
-        fixedMiddleware[resourceName][actionName].push(Sc.ACL.can(actionName, resourceName));
+        fixedMiddleware[resourceName][actionName] = Sc.ACL.can(actionName, resourceName);
       });
     });
   });
