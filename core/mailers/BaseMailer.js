@@ -1,4 +1,4 @@
-/* globals Class */
+/* globals Class, Promise */
 
 var fs = require('fs');
 var path = require('path');
@@ -7,6 +7,7 @@ var _ = require('lodash');
 
 var BaseMailer = Class('BaseMailer')({
   _transport: null,
+  _timeout: 20000,
   _options: null,
   _templates: null,
 
@@ -41,8 +42,8 @@ var BaseMailer = Class('BaseMailer')({
         process.cwd(),
         'views',
         'mailers',
-        `${this.className}`,
-        `${templateName}.pug`
+        this.className,
+        templateName + '.pug'
       ),
     };
 
@@ -79,7 +80,7 @@ var BaseMailer = Class('BaseMailer')({
       throw new Error('Method ' + methodName + ' in ' + this.className + ' doesn\'t have a template');
     }
 
-    let html;
+    var html;
 
     try {
       html = pug.renderFile(template, localVars);
@@ -90,7 +91,21 @@ var BaseMailer = Class('BaseMailer')({
     options.html = html;
     options.to = recipients;
 
-    return this.transport().sendMail(options);
+    var mailer = this.transport();
+    var name = this.className;
+    var ttl = this._timeout;
+
+    return new Promise(function(resolve, reject) {
+      var _promised = mailer.sendMail(options);
+
+      Promise.resolve(_promised)
+        .then(resolve)
+        .catch(reject);
+
+      setTimeout(function () {
+        reject('Operation for `' + name + '` timeout');
+      }, ttl);
+    });
   },
 });
 
