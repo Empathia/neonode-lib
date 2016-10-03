@@ -29,9 +29,6 @@ function makeError(errorName, defaultMessage) {
 Error.define = makeError;
 
 // other errors
-Error.define('Failure', 'An error was ocurred');
-Error.define('UndefinedRoleError', 'Missing role');
-
 Error.define('BadRequest', 'Bad Request'); // 400
 Error.define('ServerError', 'Server Failure'); // 500
 Error.define('NotFoundError', 'Not Found'); // 404

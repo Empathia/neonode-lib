@@ -252,47 +252,46 @@ var Neonode = Class({}, 'Neonode')({
             return getProp(prop, _old, value || '');
           }
 
+          // normalize all given errors
           function _fix(error) {
-            if (!_isDebug || !error.stack) {
-              return [error instanceof Error ? error.message || error.toString() : error];
+            if (error.errors) {
+              if (!Array.isArray(error.errors)) {
+                error.errors = Object.keys(error.errors)
+                  .map(function (_key) {
+                    return { field: _key, failure: error.errors[_key] };
+                  });
+              }
+
+              return error.errors.map(function (err) {
+                return _fix(err)[0];
+              });
+            }
+
+            if (typeof error === 'string') {
+              return [{
+                message: error
+              }];
             }
 
             return [{
-              stack: error.stack || null,
+              stack: _isDebug && error.stack || undefined,
+              field: error.field || undefined,
+              failure: error.failure || undefined,
               message: error instanceof Error ? error.message || error.toString() : error
             }];
           }
 
-          if (_failure.errors) {
-            if (!Array.isArray(_failure.errors)) {
-              _failure.errors = Object.keys(_failure.errors)
-                .map(function (_key) {
-                  return { field: _key, failure: _failure.errors[_key] };
-                });
-            }
-
-            // normalize all given errors
-            _failure.errors = _failure.errors.map(function (_error) {
-              if (typeof _error === 'string') {
-                return {
-                  message: _error
-                };
-              }
-
-              return _error;
-            });
-
-            _err = _failure.errors;
-            _err.label = _failure.label;
+          if (_failure.description) {
+            _err = _failure;
           }
 
           // shortcuts
           req.old = _get;
-          req.errors = _err;
+          req.failure = _err;
           req.redirectUrl = _url;
 
           res.locals.old = _get;
-          res.locals.errors = _err;
+          res.locals.failure = _err;
           res.locals.redirectUrl = _url;
 
           try {
@@ -310,9 +309,9 @@ var Neonode = Class({}, 'Neonode')({
           return (_next ? Promise.reject(_next) : Promise.resolve(_result))
             .catch(function (error) {
               req.session._failure = {
-                old: req.body,
-                label: error.errors ? error.label || error.message : error.label || error.name,
-                errors: error.errors ? error.errors : _fix(error)
+                description: error.label || error.name,
+                errors: _fix(error),
+                old: req.body
               };
 
               if (!req.redirectUrl) {
