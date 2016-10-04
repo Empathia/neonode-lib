@@ -29,8 +29,13 @@ var logger;
 function config(key, value) {
   var parts = key.split('.');
   var prop = parts.shift();
-  var obj = (SETTINGS[SETTINGS.environment] || {})[prop]
-    || ((SETTINGS[prop] || {})[SETTINGS.environment] || SETTINGS[prop]) || null;
+  var obj = (SETTINGS[SETTINGS.environment] || {})[prop];
+  var _env = (SETTINGS[prop] || {})[SETTINGS.environment];
+  var _value = SETTINGS[prop];
+
+  obj = typeof obj === 'undefined'
+    ? (typeof _env === 'undefined' ? _value : _env)
+    : obj;
 
   try {
     while (parts.length) {

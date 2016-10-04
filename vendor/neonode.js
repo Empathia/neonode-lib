@@ -168,7 +168,9 @@ var Neonode = Class({}, 'Neonode')({
         });
       }, this);
 
-      var _isDebug = config('environment') === 'development' || config('debug');
+      var _isDebug = config('debug') === false ? false :
+        config('environment') === 'development' || config('debug');
+
       var _handlers = {};
       var fixedACL = this.acl;
       var findHandler = this.router.map(matchers);
@@ -386,7 +388,12 @@ var Neonode = Class({}, 'Neonode')({
           logger[type](err.stack);
         }
 
-        res.status(status).render('shared/' + status + '.html', {
+        if (req.session) {
+          delete req.session._failure;
+        }
+
+        res.status(status).render('shared/error.html', {
+          statusCode: status,
           layout: false,
           _next: next,
           error: err
