@@ -55,10 +55,11 @@ require('neon/stdlib');
 // *************************************************************************
 //                        Error monitoring for neon
 // *************************************************************************
-if (hasREPL || process.argv.indexOf('--debug') > -1) {
-  require('../vendor/lithium');
-  require('../support/lithium');
-}
+// TODO: disabled due it transforms Error into strings (?)
+// if (hasREPL || process.argv.indexOf('--debug') > -1) {
+//   require('../vendor/lithium');
+//   require('../support/lithium');
+// }
 
 // ACL core
 require('scandium-express');

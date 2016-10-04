@@ -269,21 +269,15 @@ var Neonode = Class({}, 'Neonode')({
               });
             }
 
-            if (typeof error === 'string') {
-              return [{
-                message: error
-              }];
-            }
-
             return [{
               stack: _isDebug && error.stack || undefined,
               field: error.field || undefined,
               failure: error.failure || undefined,
-              message: error instanceof Error ? error.message || error.toString() : error
+              message: error.message || error.description || error
             }];
           }
 
-          if (_failure.description) {
+          if (_failure.description || (_failure.errors && _failure.errors.length)) {
             _err = _failure;
           }
 
