@@ -290,6 +290,9 @@ var Neonode = Class({}, 'Neonode')({
           res.locals.failure = _err;
           res.locals.redirectUrl = _url;
 
+          res.locals.currentUrl = req.url.split('?')[0];
+          res.locals.previousUrl = req.session._previousUrl;
+
           try {
             _result = controllerMethod.call(controllerInstance, req, res, function (e) {
               _next = e;
@@ -371,12 +374,19 @@ var Neonode = Class({}, 'Neonode')({
         ServerError: 500
       };
 
+      var errorHandler;
+      var fixedControllers = this.controllers;
+
       // built-in error handling
       this.app.use(function(err, req, res, next) {
         var status = fixedErrors[err.name] || 500;
         var type = status.toString().charAt() === '5' ? 'error' : 'warn';
 
         logger[type](err.message || err.toString());
+
+        if (!err.status) {
+          err.status = status;
+        }
 
         if (err.stack) {
           logger[type](err.stack);
@@ -386,12 +396,40 @@ var Neonode = Class({}, 'Neonode')({
           delete req.session._failure;
         }
 
-        res.status(status).render('shared/error.html', {
-          statusCode: status,
-          layout: false,
-          _next: next,
-          error: err
-        });
+        function fail(_err) {
+          res.status(status).render('shared/error.html', {
+            statusCode: status,
+            layout: false,
+            _next: next,
+            error: _err
+          });
+        }
+
+        if (fixedControllers.Error) {
+          var ErrorController = fixedControllers.Error;
+
+          if (!errorHandler) {
+            errorHandler = typeof ErrorController === 'function' ? new ErrorController() : ErrorController;
+          }
+
+          if (typeof errorHandler.render === 'function') {
+            try {
+              Promise
+                .resolve(errorHandler.render(err, req, res, function (_err) {
+                  if (_err) {
+                    fail(_err);
+                  } else {
+                    next();
+                  }
+                }))
+                .catch(fail);
+            } catch (_e) {
+              fail(_e);
+            }
+          }
+        } else {
+          fail(err);
+        }
       });
 
       return this;
