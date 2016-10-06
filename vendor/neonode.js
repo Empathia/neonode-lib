@@ -290,7 +290,7 @@ var Neonode = Class({}, 'Neonode')({
           res.locals.failure = _err;
           res.locals.redirectUrl = _url;
 
-          res.locals.currentUrl = req.url.split('?')[0];
+          res.locals.currentUrl = req.url; // query is required
           res.locals.previousUrl = req.session._previousUrl;
 
           try {
