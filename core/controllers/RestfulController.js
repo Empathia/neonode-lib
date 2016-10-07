@@ -39,10 +39,12 @@ module.exports = Class('RestfulController').inherits(BaseController)({
 
         fixedParams.items = fixedParams.items.map(function (resource) {
           var _resource = {};
+          var _scope;
 
           if (typeof resource === 'string') {
             _resource.url = scope[resource].url();
             _resource.name = resource;
+            _scope = scope[resource];
           } else {
             Object.keys(resource).forEach(function (key) {
               _resource[key] = resource[key];
@@ -53,7 +55,9 @@ module.exports = Class('RestfulController').inherits(BaseController)({
             }
           }
 
-          _resource.isActive = currentUrl.indexOf(_resource.url) === 0;
+          _resource.isActive = _scope
+            ? currentUrl.indexOf(_resource.url) > -1
+            : currentUrl === _resource.url;
 
           return _resource;
         });
