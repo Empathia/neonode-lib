@@ -43,7 +43,7 @@ var Neonode = Class({}, 'Neonode')({
     acl : {},
 
     init : function (cwd){
-      // logger.info(clc.bold('Initializing application...'));
+      logger.info(clc.bold('Current environment: ') + config('environment'));
 
       // read only
       Object.defineProperty(this, 'cwd', {
@@ -449,6 +449,11 @@ var Neonode = Class({}, 'Neonode')({
       return this;
     },
 
+    _bootstrap: function() {
+      return this._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
+        ._loadFiles('models/**/*.js', 'Loading models...');
+    },
+
     _serverStop : function(){
       if (this.server) {
         this.server.close();
@@ -459,10 +464,9 @@ var Neonode = Class({}, 'Neonode')({
     _serverStart : function(){
       try {
         this
-          ._configureApp()
-          ._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
-          ._loadFiles('models/**/*.js', 'Loading models...')
+          ._bootstrap()
           ._loadMailers()
+          ._configureApp()
           ._initializeApp()
           ._loadControllers()
           ._setupMiddlewares()

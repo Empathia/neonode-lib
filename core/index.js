@@ -6,7 +6,7 @@ var util = require('..')(cwd);
 var exit = process.exit.bind(process);
 
 // TODO: this value should be used to increase log level?
-var hasREPL = typeof window !== 'undefined' || process.argv.indexOf(util.filepath('bin/repl.js')) > -1;
+// var hasREPL = typeof window !== 'undefined' || process.argv.indexOf(util.filepath('bin/repl.js')) > -1;
 
 // main process
 process.name = 'Neonode';
