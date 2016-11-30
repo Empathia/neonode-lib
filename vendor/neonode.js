@@ -33,7 +33,7 @@ var Neonode = Class({}, 'Neonode')({
     server            : null,
     io                : null,
     router            : null,
-    env               : config('environment'),
+    env               : 'development',
 
     _requiredFiles: [],
     _initializers: [],
@@ -43,8 +43,6 @@ var Neonode = Class({}, 'Neonode')({
     acl : {},
 
     init : function (cwd){
-      logger.info(clc.bold('Current environment: ') + config('environment'));
-
       // read only
       Object.defineProperty(this, 'cwd', {
         get: function () {
@@ -143,7 +141,7 @@ var Neonode = Class({}, 'Neonode')({
       //                            Request Logging
       // *************************************************************************
 
-      if (config('environment') !== 'test') {
+      if (this.env !== 'test') {
         this.app.use(morgan('combined', {stream: logger.stream}));
       }
 
@@ -169,7 +167,7 @@ var Neonode = Class({}, 'Neonode')({
       }, this);
 
       var _isDebug = config('debug') === false ? false :
-        config('environment') === 'development' || config('debug');
+        this.env === 'development' || config('debug');
 
       var _handlers = {};
       var fixedACL = this.acl;
@@ -450,6 +448,10 @@ var Neonode = Class({}, 'Neonode')({
     },
 
     _bootstrap: function() {
+      this.env = config('environment');
+
+      logger.info('Current Environment: ' + this.env);
+
       return this._loadFiles('lib/boot/**/*.js', 'Loading boot files...')
         ._loadFiles('models/**/*.js', 'Loading models...');
     },
